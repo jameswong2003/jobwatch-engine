@@ -20,7 +20,13 @@ AMAZON_JOBS_BASE_URL = "https://www.amazon.jobs"
 
 def get_jobs() -> dict[str, Any]:
     """Fetch one page of recent Amazon jobs in the USA."""
-    data = request_json("GET", API_URL, params=API_PARAMS, timeout=10)
+    data = request_json(
+        "GET",
+        API_URL,
+        params=API_PARAMS,
+        headers={"Accept-Encoding": "identity"},
+        timeout=10,
+    )
 
     if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
         raise ValueError("Amazon jobs API response must contain a jobs list")
