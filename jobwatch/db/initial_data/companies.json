@@ -1,0 +1,178 @@
+[
+  {
+    "id": 1,
+    "company_name": "NVIDIA",
+    "company_job_url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs"
+  },
+  {
+    "id": 2,
+    "company_name": "Twilio",
+    "company_job_url": "https://job-boards.greenhouse.io/twilio/",
+    "job_board_type": "GREENHOUSE",
+    "has_api": true,
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/twilio/jobs?content=true"
+  },
+  {
+    "id": 3,
+    "company_name": "Ramp",
+    "company_job_url": "https://jobs.ashbyhq.com/ramp",
+    "job_board_type": "ASHBY",
+    "has_api": true,
+    "api_url": "https://api.ashbyhq.com/posting-api/job-board/ramp?includeCompensation=true"
+  },
+  {
+    "id": 4,
+    "company_name": "Welocalize",
+    "company_job_url": "https://jobs.lever.co/weloglobal",
+    "job_board_type": "LEVER",
+    "has_api": true,
+    "api_url": "https://api.lever.co/v0/postings/weloglobal"
+  },
+  {
+    "id": 5,
+    "company_name": "JPMorganChase",
+    "company_job_url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/jobs",
+    "job_board_type": "ORACLE",
+    "has_api": true,
+    "api_url": "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1001,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=150,locationId=300000000289738,sortBy=POSTING_DATES_DESC"
+  },
+  {
+    "id": 6,
+    "company_name": "Visa",
+    "company_job_url": "https://visa.wd5.myworkdayjobs.com/Visa",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://visa.wd5.myworkdayjobs.com/wday/cxs/visa/Visa/jobs"
+  },
+  {
+    "id": 7,
+    "company_name": "chess.com",
+    "company_job_url": "https://ats.rippling.com/chess/jobs",
+    "job_board_type": "RIPPLING",
+    "has_api": true,
+    "api_url": "https://api.rippling.com/platform/api/ats/v2/board/chess/jobs"
+  },
+  {
+    "id": 8,
+    "company_name": "Netflix",
+    "company_job_url": "https://netflix.wd108.myworkdayjobs.com/Netflix",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://netflix.wd108.myworkdayjobs.com/wday/cxs/netflix/Netflix/jobs"
+  },
+  {
+    "id": 9,
+    "company_name": "Intel",
+    "company_job_url": "https://intel.wd1.myworkdayjobs.com/External",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs"
+  },
+  {
+    "id": 10,
+    "company_name": "Salesforce",
+    "company_job_url": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs"
+  },
+  {
+    "id": 11,
+    "company_name": "Adobe",
+    "company_job_url": "https://adobe.wd5.myworkdayjobs.com/external_experienced",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced/jobs"
+  },
+  {
+    "id": 12,
+    "company_name": "Amazon",
+    "company_job_url": "https://www.amazon.jobs/content/en/job-categories/software-development",
+    "job_board_type": "AMAZON",
+    "has_api": true,
+    "api_url": "https://amazon.jobs/api/jobs/search?is_als=true"
+  },
+  {
+    "id": 13,
+    "company_name": "Capital One",
+    "company_job_url": "https://capitalone.wd12.myworkdayjobs.com/en-US/Capital_One",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://capitalone.wd12.myworkdayjobs.com/wday/cxs/capitalone/Capital_One/jobs"
+  },
+  {
+    "id": 14,
+    "company_name": "PDT Partners",
+    "company_job_url": "https://job-boards.greenhouse.io/pdtpartners",
+    "job_board_type": "GREENHOUSE",
+    "has_api": true,
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/pdtpartners/jobs?content=true"
+  },
+  {
+    "id": 15,
+    "company_name": "Goldman Sachs",
+    "company_job_url": "https://higher.gs.com/results?&page=1&sort=RELEVANCE",
+    "job_board_type": "ORACLE",
+    "has_api": true,
+    "api_url": "https://hdpc.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_3001,facetsList=WORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS%3BLOCATIONS,limit=25,locationId=300000000229164,sortBy=POSTING_DATES_DESC"
+  },
+    {
+    "id": 16,
+    "company_name": "Uber",
+    "company_job_url": "https://iaziqy.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/UberCareers/jobs?location=United+States&locationId=300000000484560&locationLevel=country&mode=location",
+    "job_board_type": "ORACLE",
+    "has_api": true,
+    "api_url": "https://iaziqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1,facetsList=WORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS%3BLOCATIONS,limit=25,locationId=300000000484560,sortBy=POSTING_DATES_DESC"
+  },
+  {
+    "id": 17,
+    "company_name": "BlackRock",
+    "company_job_url": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://blackrock.wd1.myworkdayjobs.com/wday/cxs/blackrock/BlackRock_Professional/jobs"
+  },
+  {
+    "id": 18,
+    "company_name": "Whatnot",
+    "company_job_url": "https://jobs.ashbyhq.com/whatnot",
+    "job_board_type": "ASHBY",
+    "has_api": true,
+    "api_url": "https://api.ashbyhq.com/posting-api/job-board/whatnot?includeCompensation=true"
+  },
+  {
+    "id": 19,
+    "company_name": "ServiceNow",
+    "company_job_url": "https://careers.servicenow.com/jobs/?search=&origin=global",
+    "job_board_type": "SMARTRECRUITERS",
+    "has_api": true,
+    "api_url": "https://api.smartrecruiters.com/v1/companies/ServiceNow/postings?limit=50"
+  },
+  {
+    "id": 20,
+    "company_name": "Notion",
+    "company_job_url": "https://jobs.ashbyhq.com/notion",
+    "job_board_type": "ASHBY",
+    "has_api": true,
+    "api_url": "https://api.ashbyhq.com/posting-api/job-board/notion?includeCompensation=true"
+  },
+  {
+    "id": 21,
+    "company_name": "DoorDash",
+    "company_job_url": "https://job-boards.greenhouse.io/doordashusa/",
+    "job_board_type": "GREENHOUSE",
+    "has_api": true,
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/doordashusa/jobs?content=true"
+  },
+  {
+    "id": 22,
+    "company_name": "Postman",
+    "company_job_url": "https://postman.wd108.myworkdayjobs.com/en-US/careers",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://postman.wd108.myworkdayjobs.com/wday/cxs/postman/careers/jobs"
+  }
+]
