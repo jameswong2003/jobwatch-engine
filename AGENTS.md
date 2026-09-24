@@ -45,8 +45,6 @@ Runtime configuration comes from `.env` via `python-dotenv`:
 - `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `EMAIL_TO` are required for
   normal runs.
 - `SMTP_PORT` defaults to `587`; `EMAIL_FROM` defaults to `SMTP_USERNAME`.
-- `TOKEN` and `JOB_NOTIFICATION_CHANNEL_ID` are legacy Discord settings and are
-  not part of the active notification path.
 
 ## Repository layout
 
@@ -174,9 +172,6 @@ rather than `JobCategoryType[value]`.
 The email client produces HTML and plain-text bodies. Preserve HTML escaping for
 all company, job, and error text because it originates from external systems.
 Errors must still be sent when a cycle discovers no new jobs.
-
-Discord code remains in the repository but is not active in `main.py`. Do not
-silently restore Discord startup as part of unrelated notification work.
 
 ## Validation expectations
 
