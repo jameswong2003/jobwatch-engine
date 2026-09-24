@@ -1,7 +1,5 @@
 from jobwatch.db.database import Base, engine, SessionLocal
 from jobwatch.models.Company import Company
-from jobwatch.models.Job import Job
-from jobwatch.models.ErrorLog import ErrorLog
 import os, json
 
 def init_db():

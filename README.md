@@ -123,7 +123,7 @@ Jobs are persisted in `jobwatch/db/app.db` (SQLite, resolved relative to the `da
 - All scraping is asynchronous via `asyncio` with blocking I/O run in thread pools
 - Email sending also runs in a thread pool (SMTP is blocking)
 - Each scrape cycle is independent; a failure on one company's board doesn't affect others
-- Jobs are deduplicated by posting URL (globally unique) or by `(company_id, job_id)` pair for boards without stable URLs (e.g. Workday)
+- Jobs are deduplicated by posting URL (globally unique) across all boards, including Workday
 
 ## Testing & Linting
 
@@ -137,6 +137,13 @@ python3 -m pytest
 GitHub Actions runs the test suite on pushes and pull requests. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for safe validation guidance. Routine checks
 do not call live job-board APIs or send email.
+
+### Existing SQLite databases
+
+The local `jobwatch/db/app.db` file must be removed by the user when applying the
+current schema change; normal startup recreates it. This removes existing local
+jobs and companies, so export any data you want to keep first. The application does
+not delete the database automatically.
 
 ## License
 

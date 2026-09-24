@@ -1,21 +1,10 @@
-import enum
 from typing import Optional
 
 from sqlalchemy import Boolean, Enum, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from jobwatch.db.database import Base
 
-class JobBoardType(enum.Enum):
-    ASHBY = "Ashby"
-    GREENHOUSE = "Greenhouse"
-    WORKDAY = "Workday"
-    LEVER = "Lever"
-    ORACLE = "Oracle"
-    SMARTRECRUITERS = "SmartRecruiters"
-    RIPPLING = "Rippling"
-    CUSTOM = "Custom"
-    AMAZON = "Amazon"
-    OTHER = "Other"
+from jobwatch.models.job_types import JobBoardType
 
 class Company(Base):
     __tablename__ = "company"

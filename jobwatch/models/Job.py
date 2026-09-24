@@ -1,36 +1,14 @@
-import enum
 from datetime import date as date_
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from jobwatch.db.database import Base
 from jobwatch.models.Company import Company
-
-class JobCategoryType(enum.Enum):
-    SOFTWARE = "SOFTWARE"
-    HARDWARE = "HARDWARE"
-    FINANCE = "FINANCE"
-    DATA_SCIENCE = "DATA_SCIENCE"
-    PRODUCT = "PRODUCT"
-    DESIGN = "DESIGN/UX"
-    MARKETING = "MARKETING"
-    SALES = "SALES"
-    OPERATIONS = "OPERATIONS"
-    HUMAN_RESOURCES = "HUMAN_RESOURCES"
-    LEGAL = "LEGAL"
-    CUSTOMER_SUPPORT = "CUSTOMER_SUPPORT"
-    ENGINEERING = "ENGINEERING"
-    MEDICAL = "MEDICAL"
-    EDUCATION = "EDUCATION"
-    OTHER = "Other"
+from jobwatch.models.job_types import JobCategoryType
 
 class Job(Base):
     __tablename__ = "jobs"
-    __table_args__ = (
-        UniqueConstraint("company_id", "job_id", name="uq_job_company_job_id"),
-    )
-
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(Integer, ForeignKey("company.id", ondelete="CASCADE"), nullable=False)
     job_posting_url: Mapped[str] = mapped_column(Text, unique=True, nullable=False)

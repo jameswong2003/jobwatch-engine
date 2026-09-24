@@ -5,12 +5,13 @@ from typing import List, Optional, Tuple
 
 from jobwatch.db.init_db import init_db
 from jobwatch.db.company_queries import get_all_companies, get_company_by_id
-from jobwatch.db.job_queries import insert_job_list
+from jobwatch.db.job_queries import insert_job_list, materialize_new_job_candidates
 from jobwatch.db.error_log_queries import insert_error_log_list
-from jobwatch.helpers.job_sorter import categorize_jobs
 from jobwatch.helpers.mapper import api_mapper
 from jobwatch.models.Company import Company, JobBoardType
-from jobwatch.models.Job import Job, JobCategoryType
+from jobwatch.models.Job import Job
+from jobwatch.models.job_types import JobCategoryType
+from jobwatch.scrapers.job_candidate import JobCandidate
 from jobwatch.models.ErrorLog import ErrorLog
 from jobwatch.service.config import EmailConfig
 from jobwatch.service.email_client import format_digest_preview, send_job_notifications
@@ -32,13 +33,13 @@ class _CompanyScrapeInput:
 @dataclass
 class _CompanyScrapeResult:
     company: _CompanyScrapeInput
-    jobs: Optional[List[Job]] = None
+    jobs: Optional[List[JobCandidate]] = None
     error_message: Optional[str] = None
 
 
 async def process_jobs_from_companies(
     companies: List[Company],
-) -> Tuple[List[Job], List[ErrorLog]]:
+) -> Tuple[List[JobCandidate], List[ErrorLog]]:
     company_inputs = [
         _CompanyScrapeInput(
             company_id=company.id,
@@ -66,8 +67,10 @@ async def process_jobs_from_companies(
                 jobs = await asyncio.to_thread(
                     api_mapper,
                     company.job_board_type,
+                    company.company_id,
                     company.company_name,
                     company.api_url,
+                    company.company_job_url,
                 )
             return _CompanyScrapeResult(company=company, jobs=jobs)
         except Exception as error:
@@ -77,7 +80,7 @@ async def process_jobs_from_companies(
         *(scrape_company(company) for company in eligible_companies)
     )
 
-    jobs: List[Job] = []
+    jobs: List[JobCandidate] = []
     errors: List[ErrorLog] = []
     for result in scrape_results:
         company = result.company
@@ -96,11 +99,9 @@ async def process_jobs_from_companies(
             continue
 
         company_jobs = result.jobs or []
-        print(f"Found {len(company_jobs)} new jobs for {company.company_name}")
+        print(f"Fetched {len(company_jobs)} job candidates for {company.company_name}")
         jobs.extend(company_jobs)
 
-    if jobs:
-        jobs = categorize_jobs(jobs)
     return jobs, errors
 
 
@@ -123,7 +124,8 @@ async def job_loop(
 
     while True:
         try:
-            jobs, errors = await process_jobs_from_companies(companies)
+            candidates, errors = await process_jobs_from_companies(companies)
+            jobs = await asyncio.to_thread(materialize_new_job_candidates, candidates)
 
             jobs_to_send = (
                 jobs if category_filter is None

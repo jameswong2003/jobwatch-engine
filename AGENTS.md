@@ -110,7 +110,8 @@ Provider details:
 - Greenhouse and Ashby use `GET` and return an object containing a `jobs` list.
 - Lever uses `GET` and returns a bare list.
 - Workday uses `POST`; build posting URLs from `Company.company_job_url` and the
-  posting `externalPath`. Deduplicate Workday jobs by `(company_id, job_id)`.
+  posting `externalPath`. Use the resulting posting URL as the job identity, like
+  every other provider.
 - Amazon is a custom scraper with a fixed request body and currently limited
   pagination/filter behavior; verify its intended scope before expanding it.
 - Oracle, SmartRecruiters, and Rippling have provider-specific request shapes;
@@ -119,9 +120,10 @@ Provider details:
 ## Models and persistence
 
 `Company` stores the public careers URL, board type, API-enabled flag, and API
-URL. `Job` belongs to a company and has a globally unique posting URL plus a
-company-scoped job ID constraint. `ErrorLog` belongs to a company and also stores
-snapshots of the company name and URLs from the time of failure.
+URL. `Job` belongs to a company and is uniquely identified by its globally unique
+posting URL. `job_id` is provider metadata and is not used for uniqueness.
+`ErrorLog` belongs to a company and also stores snapshots of the company name and
+URLs from the time of failure.
 
 Use `job.company.company_name`; `Job` does not have a `company_name` field.
 
@@ -130,11 +132,6 @@ module rather than the process working directory. Database sessions belong in
 `company_queries.py`, `job_queries.py`, or `error_log_queries.py`. Each query
 function should open its own `SessionLocal`, commit or roll back as appropriate,
 and close the session in `finally`.
-
-`Base.metadata.create_all` creates missing tables but does not migrate existing
-columns. Schema changes require an explicit migration strategy or a documented
-database rebuild. Import every new ORM model in `init_db.py` so its table is
-registered before `create_all` runs.
 
 SQLite foreign-key cascades are not relied upon here. Company removal explicitly
 deletes dependent jobs and error logs.

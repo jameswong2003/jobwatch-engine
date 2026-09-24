@@ -1,8 +1,8 @@
 from typing import List, Tuple
-from jobwatch.models.Job import Job, JobCategoryType
+from jobwatch.models.job_types import JobCategoryType
 from jobwatch.helpers.filter_constants import JOB_FILTERS
 
-def categorize_jobs(jobs: List[Job]) -> List[Job]:
+def categorize_jobs(jobs: List) -> List:
     for job in jobs:
         job_title: str = job.job_title.lower()
         for category, keywords in JOB_FILTERS.items():

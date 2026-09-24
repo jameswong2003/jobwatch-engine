@@ -1,7 +1,6 @@
-from typing import List
-
-from jobwatch.models.Job import Job
-from jobwatch.models.Company import JobBoardType
+from jobwatch.models.job_types import JobBoardType
+from jobwatch.helpers.job_sorter import categorize_jobs
+from jobwatch.scrapers.job_candidate import JobCandidate
 from jobwatch.scrapers.ashby_util import get_ashby_jobs
 from jobwatch.scrapers.greenhouse_util import get_greenhouse_jobs
 from jobwatch.scrapers.lever_util import get_lever_jobs
@@ -12,23 +11,33 @@ from jobwatch.scrapers.workday_util import get_workday_jobs
 from jobwatch.scrapers.custom_scrapers.amazon.amazon_scraper import get_amazon_jobs
 
 
-def api_mapper(job_board_type: JobBoardType, company_name: str, api_url: str) -> List[Job]:
+def api_mapper(
+    job_board_type: JobBoardType,
+    company_id: int,
+    company_name: str,
+    api_url: str,
+    company_job_url: str,
+) -> list[JobCandidate]:
+    """Scrape and normalize postings without consulting persistence."""
     match job_board_type:
         case JobBoardType.ASHBY:
-            return get_ashby_jobs(api_url, company_name)
+            candidates = get_ashby_jobs(api_url, company_id, company_name)
         case JobBoardType.GREENHOUSE:
-            return get_greenhouse_jobs(api_url, company_name)
+            candidates = get_greenhouse_jobs(api_url, company_id, company_name)
         case JobBoardType.WORKDAY:
-            return get_workday_jobs(api_url, company_name)
+            if not isinstance(company_job_url, str) or not company_job_url.strip():
+                raise ValueError(f"Workday company {company_name!r} requires a non-empty company_job_url")
+            candidates = get_workday_jobs(api_url, company_id, company_name, company_job_url)
         case JobBoardType.LEVER:
-            return get_lever_jobs(api_url, company_name)
+            candidates = get_lever_jobs(api_url, company_id, company_name)
         case JobBoardType.ORACLE:
-            return get_oracle_cloud_jobs(api_url, company_name)
+            candidates = get_oracle_cloud_jobs(api_url, company_id, company_name)
         case JobBoardType.SMARTRECRUITERS:
-            return get_smartrecruiters_jobs(api_url, company_name)
+            candidates = get_smartrecruiters_jobs(api_url, company_id, company_name)
         case JobBoardType.RIPPLING:
-            return get_rippling_jobs(api_url, company_name)
+            candidates = get_rippling_jobs(api_url, company_id, company_name)
         case JobBoardType.AMAZON:
-            return get_amazon_jobs(company_name)
+            candidates = get_amazon_jobs(company_id, company_name)
         case _:
-            return []
+            candidates = []
+    return categorize_jobs(candidates)
