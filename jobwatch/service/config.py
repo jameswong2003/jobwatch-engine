@@ -14,7 +14,7 @@ class EmailConfig:
 
 def load_poll_interval_seconds() -> int:
     try:
-        return int(os.getenv("POLL_INTERVAL_SECONDS", "3600"))
+        return int(os.getenv("POLL_INTERVAL_SECONDS", "86400"))
     except ValueError:
         raise RuntimeError("POLL_INTERVAL_SECONDS must be an integer") from None
 
