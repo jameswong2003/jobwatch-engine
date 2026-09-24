@@ -65,7 +65,9 @@ entrypoints.
 ## Runtime flow
 
 `main.py` initializes the schema and initial company data, loads configuration,
-and starts `jobwatch.service.job_processor.job_loop`.
+and runs `jobwatch.service.job_processor.process_job_cycle` repeatedly, sleeping
+for `POLL_INTERVAL_SECONDS` between cycles. The process continues after a cycle
+failure; `KeyboardInterrupt` stops the loop.
 
 Each polling cycle:
 

@@ -47,7 +47,7 @@ JobWatch polls a collection of company job-board APIs on a configurable interval
 python main.py
 ```
 
-This fetches jobs from all configured company boards, categorizes them, stores new postings in the database, and sends an email digest.
+This starts the standalone polling process. It fetches jobs from all configured company boards, categorizes them, stores new postings in the database, and sends an email digest, then repeats after `POLL_INTERVAL_SECONDS` (default: 3600 seconds). A failed cycle is logged and the process continues with the next cycle.
 
 ### Filter the email digest by category
 ```bash

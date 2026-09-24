@@ -105,14 +105,13 @@ async def process_jobs_from_companies(
     return jobs, errors
 
 
-async def job_loop(
-    poll_interval_seconds: int,
+async def process_job_cycle(
     email_config: Optional[EmailConfig] = None,
     category_filter: Optional[JobCategoryType] = None,
     dry_run: bool = False,
     company_id: Optional[int] = None,
 ) -> None:
-    """Continuously process jobs, print notifications, and email a digest of new postings."""
+    """Process one polling cycle and email a digest of new postings."""
     init_db()
     if company_id is None:
         companies: List[Company] = get_all_companies()
@@ -122,40 +121,37 @@ async def job_loop(
             raise ValueError(f"No company found with ID {company_id}")
         companies = [company]
 
-    while True:
-        try:
-            candidates, errors = await process_jobs_from_companies(companies)
-            jobs = await asyncio.to_thread(materialize_new_job_candidates, candidates)
+    try:
+        candidates, errors = await process_jobs_from_companies(companies)
+        jobs = await asyncio.to_thread(materialize_new_job_candidates, candidates)
 
-            jobs_to_send = (
-                jobs if category_filter is None
-                else [job for job in jobs if job.category == category_filter]
-            )
+        jobs_to_send = (
+            jobs if category_filter is None
+            else [job for job in jobs if job.category == category_filter]
+        )
 
-            if dry_run:
-                # Jobs aren't persisted in dry-run mode, so the `company` relationship
-                # (normally lazy-loaded after insert_job_list commits) is never populated.
-                # Attach it manually from the already-loaded companies list instead.
-                companies_by_id = {company.id: company for company in companies}
-                for job in jobs_to_send:
-                    job.company = companies_by_id.get(job.company_id)
+        if dry_run:
+            # Jobs aren't persisted in dry-run mode, so the `company` relationship
+            # (normally lazy-loaded after insert_job_list commits) is never populated.
+            # Attach it manually from the already-loaded companies list instead.
+            companies_by_id = {company.id: company for company in companies}
+            for job in jobs_to_send:
+                job.company = companies_by_id.get(job.company_id)
 
-                subject, text_body = format_digest_preview(jobs_to_send, errors)
-                print("\n=== DRY RUN: no DB writes, no email sent ===")
-                print(f"Subject: {subject}")
-                print(text_body)
-                return
+            subject, text_body = format_digest_preview(jobs_to_send, errors)
+            print("\n=== DRY RUN: no DB writes, no email sent ===")
+            print(f"Subject: {subject}")
+            print(text_body)
+            return
 
-            if errors:
-                insert_error_log_list(errors)
+        if errors:
+            insert_error_log_list(errors)
 
-            if jobs or errors:
-                if jobs:
-                    insert_job_list(jobs)
-                print("***SENDING OUT EMAIL***")
-                await asyncio.to_thread(send_job_notifications, jobs_to_send, email_config, errors)
-        except Exception as e:
-            print(f"job_loop iteration failed: {e}")
-
-        print(f"\nWaiting {poll_interval_seconds} seconds before next check...\n")
-        await asyncio.sleep(poll_interval_seconds)
+        if jobs or errors:
+            if jobs:
+                insert_job_list(jobs)
+            print("***SENDING OUT EMAIL***")
+            await asyncio.to_thread(send_job_notifications, jobs_to_send, email_config, errors)
+    except Exception as e:
+        print(f"Job processing cycle failed: {e}")
+        raise

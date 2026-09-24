@@ -7,7 +7,7 @@ from jobwatch.db.company_queries import get_company_by_id
 from jobwatch.db.init_db import init_db, insert_initial_companies
 from jobwatch.models.Job import JobCategoryType
 from jobwatch.service.config import load_email_config, load_poll_interval_seconds
-from jobwatch.service.job_processor import job_loop
+from jobwatch.service.job_processor import process_job_cycle
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,13 +48,25 @@ async def main():
     poll_interval_seconds = load_poll_interval_seconds()
     email_config = None if args.dry_run else load_email_config()
 
-    await job_loop(
-        poll_interval_seconds,
-        email_config,
-        category_filter,
-        dry_run=args.dry_run,
-        company_id=args.company_id,
-    )
+    while True:
+        try:
+            await process_job_cycle(
+                email_config,
+                category_filter,
+                dry_run=args.dry_run,
+                company_id=args.company_id,
+            )
+        except Exception as error:
+            # A failed cycle should not stop this standalone polling process.
+            print(f"Polling cycle failed; continuing after the interval: {error}")
+            if args.dry_run:
+                raise
+
+        if args.dry_run:
+            return
+
+        print(f"\nWaiting {poll_interval_seconds} seconds before next check...\n")
+        await asyncio.sleep(poll_interval_seconds)
 
 
 if __name__ == "__main__":
