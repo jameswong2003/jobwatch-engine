@@ -99,7 +99,9 @@ def send_job_notifications(jobs: List[Job], email_config: EmailConfig, errors: L
     if not jobs and not errors:
         return
 
-    message = build_digest_email(jobs, errors, email_config.email_from, email_config.email_to)
+    message = build_digest_email(
+        jobs, errors, email_config.email_from, ", ".join(email_config.email_to)
+    )
 
     with smtplib.SMTP(email_config.smtp_host, email_config.smtp_port) as server:
         server.starttls()

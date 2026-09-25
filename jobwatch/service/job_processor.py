@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import List, Optional, Tuple
 
 from jobwatch.db.init_db import init_db
@@ -151,7 +151,20 @@ async def process_job_cycle(
             if jobs:
                 insert_job_list(jobs)
             print("***SENDING OUT EMAIL***")
-            await asyncio.to_thread(send_job_notifications, jobs_to_send, email_config, errors)
+            email_errors = []
+            for recipient in email_config.email_to:
+                recipient_config = replace(email_config, email_to=[recipient])
+                try:
+                    await asyncio.to_thread(
+                        send_job_notifications, jobs_to_send, recipient_config, errors
+                    )
+                except Exception as email_error:
+                    print(f"Error sending job digest to {recipient}: {email_error}")
+                    email_errors.append(email_error)
+            if email_errors:
+                raise RuntimeError(
+                    f"Failed to send job digest to {len(email_errors)} recipient(s)"
+                ) from email_errors[0]
     except Exception as e:
         print(f"Job processing cycle failed: {e}")
         raise

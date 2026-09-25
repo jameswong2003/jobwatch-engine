@@ -33,7 +33,10 @@ JobWatch polls a collection of company job-board APIs on a configurable interval
 
    Edit `.env` with:
    - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` — your email provider's SMTP settings
-   - `EMAIL_FROM`, `EMAIL_TO` — sender and recipient email addresses
+   - `EMAIL_FROM` — sender email address
+   - `EMAIL_TO` — comma-separated recipient email addresses (for example,
+     `first@example.com,second@example.com`); each recipient receives the same
+     job digest
    - `POLL_INTERVAL_SECONDS` — seconds between scrape cycles (defaults to 3600 / 1 hour)
 
    **Note for Gmail users**: Generate an [App Password](https://myaccount.google.com/apppasswords) (requires 2-Step Verification enabled) and use that in `SMTP_PASSWORD` instead of your account password.

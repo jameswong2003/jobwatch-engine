@@ -43,7 +43,8 @@ Runtime configuration comes from `.env` via `python-dotenv`:
 
 - `POLL_INTERVAL_SECONDS` is optional and defaults to `3600`.
 - `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `EMAIL_TO` are required for
-  normal runs.
+  normal runs. `EMAIL_TO` is a comma-separated list of recipient email addresses;
+  each receives the same job digest.
 - `SMTP_PORT` defaults to `587`; `EMAIL_FROM` defaults to `SMTP_USERNAME`.
 
 ## Repository layout
@@ -76,7 +77,8 @@ Each polling cycle:
    rest of the cycle.
 5. Categorizes new jobs and inserts them in batches.
 6. Inserts error logs from the cycle.
-7. Sends one digest when there are new jobs, errors, or both.
+7. Sends one digest to each configured `EMAIL_TO` recipient when there are new
+   jobs, errors, or both.
 
 The scrapers and SMTP client are blocking, so the async orchestration calls them
 through `asyncio.to_thread`. Do not add blocking network or email work directly to
