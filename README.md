@@ -38,6 +38,8 @@ JobWatch polls a collection of company job-board APIs on a configurable interval
      `first@example.com,second@example.com`); each recipient receives the same
      job digest
    - `POLL_INTERVAL_SECONDS` — seconds between scrape cycles (defaults to 3600 / 1 hour)
+   - `MAX_CONCURRENT_COMPANY_SCRAPES` — maximum company boards scraped at once
+     (defaults to 10; use a lower value such as `2` on a low-memory server)
 
    **Note for Gmail users**: Generate an [App Password](https://myaccount.google.com/apppasswords) (requires 2-Step Verification enabled) and use that in `SMTP_PASSWORD` instead of your account password.
 

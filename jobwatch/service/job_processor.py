@@ -13,11 +13,8 @@ from jobwatch.models.Job import Job
 from jobwatch.models.job_types import JobCategoryType
 from jobwatch.scrapers.job_candidate import JobCandidate
 from jobwatch.models.ErrorLog import ErrorLog
-from jobwatch.service.config import EmailConfig
+from jobwatch.service.config import EmailConfig, load_max_concurrent_company_scrapes
 from jobwatch.service.email_client import format_digest_preview, send_job_notifications
-
-
-MAX_CONCURRENT_COMPANY_SCRAPES = 10
 
 
 @dataclass(frozen=True)
@@ -39,6 +36,7 @@ class _CompanyScrapeResult:
 
 async def process_jobs_from_companies(
     companies: List[Company],
+    max_concurrent_company_scrapes: Optional[int] = None,
 ) -> Tuple[List[JobCandidate], List[ErrorLog]]:
     company_inputs = [
         _CompanyScrapeInput(
@@ -59,7 +57,12 @@ async def process_jobs_from_companies(
     for company in eligible_companies:
         print(f"\nCompany Name: {company.company_name} — searching for new jobs")
 
-    scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_COMPANY_SCRAPES)
+    concurrency = (
+        load_max_concurrent_company_scrapes()
+        if max_concurrent_company_scrapes is None
+        else max_concurrent_company_scrapes
+    )
+    scrape_semaphore = asyncio.Semaphore(concurrency)
 
     async def scrape_company(company: _CompanyScrapeInput) -> _CompanyScrapeResult:
         try:
@@ -110,6 +113,7 @@ async def process_job_cycle(
     category_filter: Optional[JobCategoryType] = None,
     dry_run: bool = False,
     company_id: Optional[int] = None,
+    max_concurrent_company_scrapes: Optional[int] = None,
 ) -> None:
     """Process one polling cycle and email a digest of new postings."""
     init_db()
@@ -122,7 +126,9 @@ async def process_job_cycle(
         companies = [company]
 
     try:
-        candidates, errors = await process_jobs_from_companies(companies)
+        candidates, errors = await process_jobs_from_companies(
+            companies, max_concurrent_company_scrapes
+        )
         jobs = await asyncio.to_thread(materialize_new_job_candidates, candidates)
 
         jobs_to_send = (

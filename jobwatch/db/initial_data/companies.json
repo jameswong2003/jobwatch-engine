@@ -374,5 +374,21 @@
     "job_board_type": "GREENHOUSE",
     "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/reddit/jobs?content=true"
+  },
+  {
+    "id": 48,
+    "company_name": "Stripe",
+    "company_job_url": "https://stripe.com/careers/search",
+    "job_board_type": "GREENHOUSE",
+    "has_api": true,
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true"
+  },
+  {
+    "id": 49,
+    "company_name": "Glean",
+    "company_job_url": "https://www.glean.com/careers",
+    "job_board_type": "GREENHOUSE",
+    "has_api": true,
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/gleanwork/jobs?content=true"
   }
 ]

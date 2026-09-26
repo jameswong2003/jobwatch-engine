@@ -6,7 +6,11 @@ from dotenv import load_dotenv
 from jobwatch.db.company_queries import get_company_by_id
 from jobwatch.db.init_db import init_db, insert_initial_companies
 from jobwatch.models.Job import JobCategoryType
-from jobwatch.service.config import load_email_config, load_poll_interval_seconds
+from jobwatch.service.config import (
+    load_email_config,
+    load_max_concurrent_company_scrapes,
+    load_poll_interval_seconds,
+)
 from jobwatch.service.job_processor import process_job_cycle
 
 
@@ -38,6 +42,7 @@ async def main():
     category_filter = JobCategoryType[args.category] if args.category else None
 
     load_dotenv()
+    max_concurrent_company_scrapes = load_max_concurrent_company_scrapes()
     init_db()
     insert_initial_companies()
 
@@ -55,6 +60,7 @@ async def main():
                 category_filter,
                 dry_run=args.dry_run,
                 company_id=args.company_id,
+                max_concurrent_company_scrapes=max_concurrent_company_scrapes,
             )
         except Exception as error:
             # A failed cycle should not stop this standalone polling process.

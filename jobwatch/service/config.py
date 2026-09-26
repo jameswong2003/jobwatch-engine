@@ -19,6 +19,21 @@ def load_poll_interval_seconds() -> int:
         raise RuntimeError("POLL_INTERVAL_SECONDS must be an integer") from None
 
 
+def load_max_concurrent_company_scrapes() -> int:
+    raw_value = os.getenv("MAX_CONCURRENT_COMPANY_SCRAPES", "10")
+    try:
+        value = int(raw_value)
+    except ValueError:
+        raise RuntimeError(
+            "MAX_CONCURRENT_COMPANY_SCRAPES must be a positive integer"
+        ) from None
+    if value <= 0:
+        raise RuntimeError(
+            "MAX_CONCURRENT_COMPANY_SCRAPES must be a positive integer"
+        )
+    return value
+
+
 def load_email_config() -> EmailConfig:
     smtp_host = os.getenv("SMTP_HOST")
     smtp_username = os.getenv("SMTP_USERNAME")
