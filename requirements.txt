@@ -34,6 +34,7 @@ pydantic==2.12.2
 pydantic_core==2.41.4
 pymongo==4.15.3
 python-dotenv==1.1.1
+psycopg[binary]>=3.2,<4
 pytokens==0.3.0
 RapidFuzz==3.14.3
 requests==2.32.4

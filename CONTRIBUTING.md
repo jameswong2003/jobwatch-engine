@@ -12,6 +12,12 @@ Install the project dependencies with:
 python3 -m pip install -r requirements.txt
 ```
 
+Database commands require a running PostgreSQL server and an existing database.
+Copy `.env.example` to `.env` and set `DATABASE_URL` to a local or remote
+`postgresql+psycopg://...` URL before importing database modules or running
+`manage.py`. Startup creates tables from the SQLAlchemy models; this project does
+not use schema migrations.
+
 Running `main.py` performs network requests to configured job boards and can
 send email. Do not use it as a routine validation command. You do not need a
 real `.env`, job-board account, or SMTP provider to contribute or validate code.
@@ -40,7 +46,7 @@ Run the automated tests before submitting a change:
 
 ```bash
 python3 -m pip install -r requirements-dev.txt
-python3 -m pytest
+DATABASE_URL=sqlite:///:memory: python3 -m pytest
 ```
 
 GitHub Actions runs these tests for pushes and pull requests. For Python
@@ -51,9 +57,9 @@ touched modules, for example:
 python3 -m py_compile jobwatch/scrapers/example_util.py
 ```
 
-Use focused checks with mocked HTTP responses and a temporary SQLite database
+Use focused checks with mocked HTTP responses and an isolated temporary database
 when behavior needs validation. Do not call live job-board APIs, send email, or
-use `jobwatch/db/app.db` for database checks. If a change requires an integration
+use a configured user database for checks. If a change requires an integration
 check, make that explicit in the contribution description and document exactly
 what was exercised.
 

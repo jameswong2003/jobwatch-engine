@@ -1,6 +1,6 @@
 # JobWatch Engine
 
-JobWatch polls a collection of company job-board APIs on a configurable interval, categorizes new job postings by keyword, stores them in a local SQLite database, and sends an email digest grouped by company. The digest includes any scrape errors from the cycle, ensuring visibility when a company's job board breaks or they switch ATS providers.
+JobWatch polls a collection of company job-board APIs on a configurable interval, categorizes new job postings by keyword, stores them in PostgreSQL, and sends an email digest grouped by company. The digest includes any scrape errors from the cycle, ensuring visibility when a company's job board breaks or they switch ATS providers.
 
 ## Features
 
@@ -9,7 +9,7 @@ JobWatch polls a collection of company job-board APIs on a configurable interval
 - **Email digest**: Sends formatted emails with job postings grouped by company (company names in bold, job titles in italics), plus an error section if any scrapes failed
 - **Category filtering**: Use `--category` to restrict the email digest to a single job category without affecting what gets scraped or stored
 - **Error logging**: Captures and stores scrape failures with timestamps and original board URLs, helping identify when companies have switched job-board providers
-- **No external dependencies for data**: All jobs stored in local SQLite; no cloud storage or external APIs required for persistence
+- **PostgreSQL persistence**: Store jobs and scrape errors in a local or remote PostgreSQL database
 
 ## Setup
 
@@ -32,6 +32,11 @@ JobWatch polls a collection of company job-board APIs on a configurable interval
    ```
 
    Edit `.env` with:
+   - `DATABASE_URL` — required SQLAlchemy PostgreSQL URL. For a local server, use
+     `postgresql+psycopg://jobwatch:password@localhost:5432/jobwatch`. For a
+     remote server, use its host and credentials; append `?sslmode=require` if
+     the provider requires SSL. Create the PostgreSQL server and database before
+     starting JobWatch. Never commit real credentials.
    - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` — your email provider's SMTP settings
    - `EMAIL_FROM` — sender email address
    - `EMAIL_TO` — comma-separated recipient email addresses (for example,
@@ -43,7 +48,9 @@ JobWatch polls a collection of company job-board APIs on a configurable interval
 
    **Note for Gmail users**: Generate an [App Password](https://myaccount.google.com/apppasswords) (requires 2-Step Verification enabled) and use that in `SMTP_PASSWORD` instead of your account password.
 
-   The database and initial companies are set up automatically when you run `main.py` for the first time.
+   JobWatch creates its tables and inserts initial companies automatically when
+   you run `main.py` for the first time. It does not create the PostgreSQL server
+   or database itself.
 
 ## Usage
 
@@ -117,7 +124,10 @@ On a fresh install, `main.py` automatically creates the database and seeds compa
 
 ## Database
 
-Jobs are persisted in `jobwatch/db/app.db` (SQLite, resolved relative to the `database.py` module — works correctly regardless of your working directory). The schema includes:
+Jobs are persisted in the PostgreSQL database selected by `DATABASE_URL`. The
+same setting is loaded from `.env` for `main.py`, `manage.py`, and direct database
+module use. The schema is created from the SQLAlchemy models when the app starts;
+there is no migration system. The schema includes:
 
 - **Company**: Stores board type, job board URL, and API endpoint for each company
 - **Job**: Job title, posting URL, date posted, date added, category, and link to company
@@ -136,19 +146,12 @@ Install the development dependencies and run the test suite:
 
 ```bash
 python3 -m pip install -r requirements-dev.txt
-python3 -m pytest
+DATABASE_URL=sqlite:///:memory: python3 -m pytest
 ```
 
 GitHub Actions runs the test suite on pushes and pull requests. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for safe validation guidance. Routine checks
 do not call live job-board APIs or send email.
-
-### Existing SQLite databases
-
-The local `jobwatch/db/app.db` file must be removed by the user when applying the
-current schema change; normal startup recreates it. This removes existing local
-jobs and companies, so export any data you want to keep first. The application does
-not delete the database automatically.
 
 ## License
 

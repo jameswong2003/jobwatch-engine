@@ -1,8 +1,6 @@
 import argparse
 import asyncio
 
-from dotenv import load_dotenv
-
 from jobwatch.db.company_queries import get_company_by_id
 from jobwatch.db.init_db import init_db, insert_initial_companies
 from jobwatch.models.Job import JobCategoryType
@@ -41,7 +39,6 @@ async def main():
     args = parse_args()
     category_filter = JobCategoryType[args.category] if args.category else None
 
-    load_dotenv()
     max_concurrent_company_scrapes = load_max_concurrent_company_scrapes()
     init_db()
     insert_initial_companies()

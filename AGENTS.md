@@ -7,7 +7,7 @@ the code as the source of truth. Keep this guide updated when behavior changes.
 ## Project overview
 
 JobWatch polls company job-board APIs, categorizes newly discovered postings,
-stores them in SQLite, and emails a digest grouped by company. Scrape failures are
+stores them in PostgreSQL, and emails a digest grouped by company. Scrape failures are
 stored and included in the digest so one broken company board does not hide the
 results from other boards.
 
@@ -41,6 +41,10 @@ enabled API continue to be skipped as in an unfiltered run.
 
 Runtime configuration comes from `.env` via `python-dotenv`:
 
+- `DATABASE_URL` is required and must be a SQLAlchemy PostgreSQL URL using
+  `psycopg`, such as `postgresql+psycopg://user:password@localhost:5432/jobwatch`.
+  It may point to a local or remote server. The PostgreSQL server and database
+  must exist before startup; `Base.metadata.create_all()` creates the tables.
 - `POLL_INTERVAL_SECONDS` is optional and defaults to `3600`.
 - `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `EMAIL_TO` are required for
   normal runs. `EMAIL_TO` is a comma-separated list of recipient email addresses;
@@ -129,14 +133,16 @@ URLs from the time of failure.
 
 Use `job.company.company_name`; `Job` does not have a `company_name` field.
 
-The SQLite database is `jobwatch/db/app.db`, resolved relative to the database
-module rather than the process working directory. Database sessions belong in
+The database engine uses the required `DATABASE_URL` from `.env`; `database.py`
+loads dotenv configuration before creating the engine, including for `manage.py`.
+Database sessions belong in
 `company_queries.py`, `job_queries.py`, or `error_log_queries.py`. Each query
 function should open its own `SessionLocal`, commit or roll back as appropriate,
 and close the session in `finally`.
 
-SQLite foreign-key cascades are not relied upon here. Company removal explicitly
-deletes dependent jobs and error logs.
+Company removal explicitly deletes dependent jobs and error logs. Company imports
+accept explicit IDs; after an import PostgreSQL's generated-ID sequence is aligned
+with the largest company ID.
 
 ## Managing company data
 
@@ -181,8 +187,8 @@ For changes:
 
 - Run `python3 -m py_compile` on touched Python modules.
 - Use focused, isolated checks for the behavior being changed.
-- Use a temporary SQLite database for database tests; do not mutate the user's
-  `jobwatch/db/app.db` during verification.
+- Use an isolated database for database checks; do not mutate a configured user
+  database during verification.
 - Do not call live job-board APIs or send email unless the task explicitly needs
   an integration check and the user has supplied the necessary authorization and
   configuration.
