@@ -1,11 +1,23 @@
 import smtplib
+from dataclasses import dataclass
 from email.message import EmailMessage
 from html import escape
 from typing import List, Tuple
 
 from jobwatch.models.Job import Job
 from jobwatch.models.ErrorLog import ErrorLog
-from jobwatch.service.config import EmailConfig
+
+
+@dataclass
+class EmailConfig:
+    """Legacy configuration accepted by the retained, inactive email helper."""
+
+    smtp_host: str
+    smtp_port: int
+    smtp_username: str
+    smtp_password: str
+    email_from: str
+    email_to: list[str]
 
 
 def _group_by_company(jobs: List[Job]) -> dict[str, List[Job]]:

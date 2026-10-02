@@ -1,121 +1,21 @@
 import asyncio
-import datetime
-from dataclasses import dataclass, replace
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from jobwatch.db.init_db import init_db
 from jobwatch.db.company_queries import get_all_companies, get_company_by_id
 from jobwatch.db.job_queries import insert_job_list, materialize_new_job_candidates
 from jobwatch.db.error_log_queries import insert_error_log_list
-from jobwatch.helpers.mapper import api_mapper
-from jobwatch.models.Company import Company, JobBoardType
-from jobwatch.models.Job import Job
-from jobwatch.models.job_types import JobCategoryType
-from jobwatch.scrapers.job_candidate import JobCandidate
+from jobwatch.models.Company import Company
 from jobwatch.models.ErrorLog import ErrorLog
-from jobwatch.service.config import EmailConfig, load_max_concurrent_company_scrapes
-from jobwatch.service.email_client import format_digest_preview, send_job_notifications
-
-
-@dataclass(frozen=True)
-class _CompanyScrapeInput:
-    company_id: int
-    company_name: str
-    company_job_url: str
-    job_board_type: JobBoardType
-    has_api: bool
-    api_url: Optional[str]
-
-
-@dataclass
-class _CompanyScrapeResult:
-    company: _CompanyScrapeInput
-    jobs: Optional[List[JobCandidate]] = None
-    error_message: Optional[str] = None
-
-
-async def process_jobs_from_companies(
-    companies: List[Company],
-    max_concurrent_company_scrapes: Optional[int] = None,
-) -> Tuple[List[JobCandidate], List[ErrorLog]]:
-    company_inputs = [
-        _CompanyScrapeInput(
-            company_id=company.id,
-            company_name=company.company_name,
-            company_job_url=company.company_job_url,
-            job_board_type=company.job_board_type,
-            has_api=company.has_api,
-            api_url=company.api_url,
-        )
-        for company in companies
-    ]
-    eligible_companies = [
-        company for company in company_inputs
-        if company.has_api and company.api_url is not None
-    ]
-
-    for company in eligible_companies:
-        print(f"\nCompany Name: {company.company_name} — searching for new jobs")
-
-    concurrency = (
-        load_max_concurrent_company_scrapes()
-        if max_concurrent_company_scrapes is None
-        else max_concurrent_company_scrapes
-    )
-    scrape_semaphore = asyncio.Semaphore(concurrency)
-
-    async def scrape_company(company: _CompanyScrapeInput) -> _CompanyScrapeResult:
-        try:
-            async with scrape_semaphore:
-                jobs = await asyncio.to_thread(
-                    api_mapper,
-                    company.job_board_type,
-                    company.company_id,
-                    company.company_name,
-                    company.api_url,
-                    company.company_job_url,
-                )
-            return _CompanyScrapeResult(company=company, jobs=jobs)
-        except Exception as error:
-            return _CompanyScrapeResult(company=company, error_message=str(error))
-
-    scrape_results = await asyncio.gather(
-        *(scrape_company(company) for company in eligible_companies)
-    )
-
-    jobs: List[JobCandidate] = []
-    errors: List[ErrorLog] = []
-    for result in scrape_results:
-        company = result.company
-        if result.error_message is not None:
-            print(f"Error fetching jobs for {company.company_name}: {result.error_message}")
-            errors.append(
-                ErrorLog(
-                    company_id=company.company_id,
-                    company_name=company.company_name,
-                    original_api_url=company.api_url,
-                    original_company_job_url=company.company_job_url,
-                    error_message=result.error_message,
-                    occurred_at=datetime.datetime.utcnow(),
-                )
-            )
-            continue
-
-        company_jobs = result.jobs or []
-        print(f"Fetched {len(company_jobs)} job candidates for {company.company_name}")
-        jobs.extend(company_jobs)
-
-    return jobs, errors
+from jobwatch.service.scraping import CompanyConfig, process_jobs_from_companies
 
 
 async def process_job_cycle(
-    email_config: Optional[EmailConfig] = None,
-    category_filter: Optional[JobCategoryType] = None,
     dry_run: bool = False,
     company_id: Optional[int] = None,
     max_concurrent_company_scrapes: Optional[int] = None,
 ) -> None:
-    """Process one polling cycle and email a digest of new postings."""
+    """Scrape one cycle and persist new jobs and scrape failures."""
     init_db()
     if company_id is None:
         companies: List[Company] = get_all_companies()
@@ -126,51 +26,46 @@ async def process_job_cycle(
         companies = [company]
 
     try:
-        candidates, errors = await process_jobs_from_companies(
-            companies, max_concurrent_company_scrapes
+        company_configs = [
+            CompanyConfig(
+                company_id=company.id,
+                company_name=company.company_name,
+                company_job_url=company.company_job_url,
+                job_board_type=company.job_board_type,
+                has_api=company.has_api,
+                api_url=company.api_url,
+            )
+            for company in companies
+        ]
+        candidates, scrape_errors = await process_jobs_from_companies(
+            company_configs, max_concurrent_company_scrapes
         )
+        errors = [
+            ErrorLog(
+                company_id=error.company_id,
+                company_name=error.company_name,
+                original_api_url=error.original_api_url,
+                original_company_job_url=error.original_company_job_url,
+                error_message=error.error_message,
+                occurred_at=error.occurred_at,
+            )
+            for error in scrape_errors
+        ]
         jobs = await asyncio.to_thread(materialize_new_job_candidates, candidates)
 
-        jobs_to_send = (
-            jobs if category_filter is None
-            else [job for job in jobs if job.category == category_filter]
-        )
-
         if dry_run:
-            # Jobs aren't persisted in dry-run mode, so the `company` relationship
-            # (normally lazy-loaded after insert_job_list commits) is never populated.
-            # Attach it manually from the already-loaded companies list instead.
-            companies_by_id = {company.id: company for company in companies}
-            for job in jobs_to_send:
-                job.company = companies_by_id.get(job.company_id)
-
-            subject, text_body = format_digest_preview(jobs_to_send, errors)
-            print("\n=== DRY RUN: no DB writes, no email sent ===")
-            print(f"Subject: {subject}")
-            print(text_body)
+            print("\n=== DRY RUN: no DB writes ===")
+            print(f"Scraped {len(candidates)} job candidates; {len(jobs)} are not in the database yet.")
+            for error in scrape_errors:
+                print(f"{error.company_name}: {error.error_message}")
             return
 
         if errors:
             insert_error_log_list(errors)
 
-        if jobs or errors:
-            if jobs:
-                insert_job_list(jobs)
-            print("***SENDING OUT EMAIL***")
-            email_errors = []
-            for recipient in email_config.email_to:
-                recipient_config = replace(email_config, email_to=[recipient])
-                try:
-                    await asyncio.to_thread(
-                        send_job_notifications, jobs_to_send, recipient_config, errors
-                    )
-                except Exception as email_error:
-                    print(f"Error sending job digest to {recipient}: {email_error}")
-                    email_errors.append(email_error)
-            if email_errors:
-                raise RuntimeError(
-                    f"Failed to send job digest to {len(email_errors)} recipient(s)"
-                ) from email_errors[0]
+        if jobs:
+            insert_job_list(jobs)
+        print(f"Scraped {len(candidates)} job candidates; stored {len(jobs)} new jobs and {len(errors)} scrape errors.")
     except Exception as e:
         print(f"Job processing cycle failed: {e}")
         raise
