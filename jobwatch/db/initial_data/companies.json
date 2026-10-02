@@ -406,5 +406,13 @@
     "job_board_type": "LEVER",
     "has_api": true,
     "api_url": "https://api.lever.co/v0/postings/wealthfront"
+  },
+  {
+    "id": 52,
+    "company_name": "Morgan Stanley",
+    "company_job_url": "https://www.morganstanley.com/people",
+    "job_board_type": "WORKDAY",
+    "has_api": true,
+    "api_url": "https://ms.wd5.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs"
   }
 ]
