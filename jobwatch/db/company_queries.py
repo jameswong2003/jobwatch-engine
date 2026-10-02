@@ -1,3 +1,4 @@
+from jobwatch.db.database import sync_company_id_sequence
 from jobwatch.db.init_db import SessionLocal
 from jobwatch.models.Company import Company, JobBoardType
 from jobwatch.models.Job import Job
@@ -79,6 +80,8 @@ def upsert_companies(companies: list[dict]) -> dict[str, int]:
 
             counts["updated" if changed else "unchanged"] += 1
 
+        db.flush()
+        sync_company_id_sequence(db)
         db.commit()
         return counts
     except Exception:
@@ -91,8 +94,8 @@ def delete_company_by_name(name: str) -> Optional[dict]:
     """
     Delete a company and all its dependent Job/ErrorLog rows by company_name.
     Returns a dict with counts of deleted rows, or None if no company with that name exists.
-    SQLite foreign keys aren't enforced in this project, so dependent rows must be
-    deleted explicitly rather than relying on ondelete=CASCADE.
+    Dependent rows are explicitly deleted before the company so this works
+    consistently regardless of database foreign-key cascade settings.
     """
     db = SessionLocal()
     try:

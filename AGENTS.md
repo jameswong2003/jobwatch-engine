@@ -7,9 +7,8 @@ the code as the source of truth. Keep this guide updated when behavior changes.
 ## Project overview
 
 JobWatch polls company job-board APIs, categorizes newly discovered postings,
-stores them in SQLite, and emails a digest grouped by company. Scrape failures are
-stored and included in the digest so one broken company board does not hide the
-results from other boards.
+and stores them and scrape failures in PostgreSQL. Notifications belong to the
+backend; the public scraping API does not depend on persistence or email.
 
 The project is a small Python application using SQLAlchemy, blocking `requests`
 scrapers, and an asynchronous polling loop. A small pytest suite runs in GitHub
@@ -21,7 +20,6 @@ Actions. There is currently no migration tool, linter, or build step configured.
 source venv/bin/activate
 pip install -r requirements.txt
 python main.py
-python main.py --category SOFTWARE
 python main.py --dry-run
 python main.py --company_id 42
 python manage.py list
@@ -32,26 +30,25 @@ python -m jobwatch.db.init_db
 Use `python3` instead of `python` when the environment does not provide a
 `python` executable.
 
-`--category` filters only the email digest. All discovered jobs are still
-categorized and persisted. `--dry-run` skips writes for scraped jobs/errors and
-skips email delivery; normal startup initialization still runs.
+`--dry-run` skips writes for scraped jobs/errors and prints a summary; normal
+startup initialization still runs.
 `--company_id` limits each polling cycle to the company with that database ID.
 An unknown ID exits with an error before polling starts. Companies without an
 enabled API continue to be skipped as in an unfiltered run.
 
 Runtime configuration comes from `.env` via `python-dotenv`:
 
+- `DATABASE_URL` is required and must be a SQLAlchemy PostgreSQL URL using
+  `psycopg`, such as `postgresql+psycopg://user:password@localhost:5432/jobwatch`.
+  It may point to a local or remote server. The PostgreSQL server and database
+  must exist before startup; `Base.metadata.create_all()` creates the tables.
 - `POLL_INTERVAL_SECONDS` is optional and defaults to `3600`.
-- `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `EMAIL_TO` are required for
-  normal runs. `EMAIL_TO` is a comma-separated list of recipient email addresses;
-  each receives the same job digest.
-- `SMTP_PORT` defaults to `587`; `EMAIL_FROM` defaults to `SMTP_USERNAME`.
 
 ## Repository layout
 
 - `main.py`: thin runtime entrypoint and CLI parsing.
 - `manage.py`: company-management CLI.
-- `jobwatch/service/`: polling orchestration, configuration, and notifications.
+- `jobwatch/service/`: polling orchestration and configuration.
 - `jobwatch/scrapers/`: generic board scrapers and custom company scrapers.
 - `jobwatch/helpers/`: board dispatch, categorization, URL cleanup, and constants.
 - `jobwatch/db/`: engine/session setup, database queries, initialization, and seed
@@ -77,27 +74,24 @@ Each polling cycle:
    rest of the cycle.
 5. Categorizes new jobs and inserts them in batches.
 6. Inserts error logs from the cycle.
-7. Sends one digest to each configured `EMAIL_TO` recipient when there are new
-   jobs, errors, or both.
 
-The scrapers and SMTP client are blocking, so the async orchestration calls them
-through `asyncio.to_thread`. Do not add blocking network or email work directly to
-the event loop.
+The scrapers are blocking, so async orchestration calls them through
+`asyncio.to_thread`. Do not add blocking network work directly to the event loop.
 
 ## Scraper contract
 
 Generic board modules follow three layers:
 
 1. A fetch function calls the remote API with a timeout and returns decoded JSON.
-2. `extract_new_jobs(...)` looks up the company once, fetches existing job keys in
-   one batched query, and maps only new postings to `Job` objects.
+2. `extract_jobs(...)` maps every valid posting to a database-independent
+   `JobCandidate`.
 3. `get_<board>_jobs(...)` combines fetching and extraction and is called by
    `api_mapper`.
 
 Important invariants:
 
-- Never reintroduce a per-posting database lookup. Existing job URLs or IDs must
-  be fetched for the whole response in one query.
+- Scrapers and `process_jobs_from_companies` do not query persistence or filter
+  postings by newness. Deduplication belongs to the caller.
 - Pass `company_name` explicitly through every scraper. Do not depend on the API
   response containing a reliable company name.
 - Network calls should use a finite timeout; existing scrapers use 10 seconds.
@@ -129,14 +123,16 @@ URLs from the time of failure.
 
 Use `job.company.company_name`; `Job` does not have a `company_name` field.
 
-The SQLite database is `jobwatch/db/app.db`, resolved relative to the database
-module rather than the process working directory. Database sessions belong in
+The database engine uses the required `DATABASE_URL` from `.env`; `database.py`
+loads dotenv configuration before creating the engine, including for `manage.py`.
+Database sessions belong in
 `company_queries.py`, `job_queries.py`, or `error_log_queries.py`. Each query
 function should open its own `SessionLocal`, commit or roll back as appropriate,
 and close the session in `finally`.
 
-SQLite foreign-key cascades are not relied upon here. Company removal explicitly
-deletes dependent jobs and error logs.
+Company removal explicitly deletes dependent jobs and error logs. Company imports
+accept explicit IDs; after an import PostgreSQL's generated-ID sequence is aligned
+with the largest company ID.
 
 ## Managing company data
 
@@ -165,15 +161,15 @@ Import semantics are intentionally ID-based and non-destructive:
 
 Do not change this into name-based matching or delete-and-reinsert behavior.
 
-## Categorization and notifications
+## Categorization and legacy email helper
 
 `helpers.filter_constants.JOB_FILTERS` is keyed by `JobCategoryType` values, not
 necessarily enum member names. Convert those values with `JobCategoryType(value)`
 rather than `JobCategoryType[value]`.
 
-The email client produces HTML and plain-text bodies. Preserve HTML escaping for
-all company, job, and error text because it originates from external systems.
-Errors must still be sent when a cycle discovers no new jobs.
+`email_client.py` remains only as an inactive compatibility helper for its
+existing formatting tests. No CLI, polling cycle, or public package API calls
+it; notification delivery is a backend responsibility.
 
 ## Validation expectations
 
@@ -181,8 +177,8 @@ For changes:
 
 - Run `python3 -m py_compile` on touched Python modules.
 - Use focused, isolated checks for the behavior being changed.
-- Use a temporary SQLite database for database tests; do not mutate the user's
-  `jobwatch/db/app.db` during verification.
+- Use an isolated database for database checks; do not mutate a configured user
+  database during verification.
 - Do not call live job-board APIs or send email unless the task explicitly needs
   an integration check and the user has supplied the necessary authorization and
   configuration.

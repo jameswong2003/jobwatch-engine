@@ -1,5 +1,7 @@
-from jobwatch.db.database import Base, engine, SessionLocal
+from jobwatch.db.database import Base, engine, SessionLocal, sync_company_id_sequence
 from jobwatch.models.Company import Company
+from jobwatch.models.Job import Job
+from jobwatch.models.ErrorLog import ErrorLog
 import os, json
 
 def init_db():
@@ -19,6 +21,8 @@ def insert_initial_companies():
                 exists = db.query(Company).filter_by(company_name=company["company_name"]).first()
                 if not exists:
                     db.add(Company(**company))
+        db.flush()
+        sync_company_id_sequence(db)
         db.commit()
         print("Companies inserted successfully.")
     except Exception as e:

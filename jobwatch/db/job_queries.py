@@ -5,10 +5,10 @@ from jobwatch.scrapers.job_candidate import JobCandidate
 from typing import Optional, List
 
 
-_SQLITE_QUERY_BATCH_SIZE = 500
+QUERY_BATCH_SIZE = 500
 
 
-def _chunks(values: List[str], size: int = _SQLITE_QUERY_BATCH_SIZE):
+def _chunks(values: List[str], size: int = QUERY_BATCH_SIZE):
     for start in range(0, len(values), size):
         yield values[start:start + size]
 
@@ -68,10 +68,10 @@ def insert_job_list(jobs: list[Job]) -> None:
 
 
 def materialize_new_job_candidates(candidates: list[JobCandidate]) -> list[Job]:
-    """Filter candidates against SQLite and convert only new rows to ORM jobs.
+    """Filter candidates against the database and convert only new rows to ORM jobs.
 
     Posting URL is the single identity key for every provider. Scrapers deliberately
-    return candidates without querying SQLite; this standalone adapter filters them
+    return candidates without querying the database; this standalone adapter filters them
     in a batched URL lookup before constructing ORM rows.
     """
     if not candidates:

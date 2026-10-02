@@ -1,8 +1,6 @@
 import argparse
 import asyncio
 
-from dotenv import load_dotenv
-
 from jobwatch.db.company_queries import get_company_by_id
 from jobwatch.db.init_db import init_db, insert_initial_companies
 from jobwatch.service.config import (
@@ -30,8 +28,6 @@ def parse_args() -> argparse.Namespace:
 
 async def main():
     args = parse_args()
-
-    load_dotenv()
     max_concurrent_company_scrapes = load_max_concurrent_company_scrapes()
     init_db()
     insert_initial_companies()
@@ -41,7 +37,6 @@ async def main():
         raise SystemExit(1)
 
     poll_interval_seconds = load_poll_interval_seconds()
-
     while True:
         try:
             await process_job_cycle(
