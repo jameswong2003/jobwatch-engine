@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 from jobwatch.db.database import Base, engine, SessionLocal, sync_company_id_sequence
 from jobwatch.models.Company import Company
 from jobwatch.models.Job import Job
@@ -6,6 +8,10 @@ import os, json
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # create_all does not remove columns from existing tables. Drop the retired
+    # flag so legacy databases can insert companies with the current model.
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE company DROP COLUMN IF EXISTS has_api"))
 
 def insert_initial_companies():
     db = SessionLocal()

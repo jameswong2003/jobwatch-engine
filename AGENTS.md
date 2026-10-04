@@ -42,6 +42,8 @@ Runtime configuration comes from `.env` via `python-dotenv`:
   `psycopg`, such as `postgresql+psycopg://user:password@localhost:5432/jobwatch`.
   It may point to a local or remote server. The PostgreSQL server and database
   must exist before startup; `Base.metadata.create_all()` creates the tables.
+  Startup also removes the retired `company.has_api` column from existing
+  legacy databases.
 - `POLL_INTERVAL_SECONDS` is optional and defaults to `3600`.
 
 ## Repository layout
@@ -68,7 +70,7 @@ failure; `KeyboardInterrupt` stops the loop.
 Each polling cycle:
 
 1. Iterates through the loaded `Company` rows.
-2. Skips companies where `has_api` is false.
+2. Skips companies without an `api_url`.
 3. Dispatches to the correct scraper through `helpers.mapper.api_mapper`.
 4. Converts each company-level failure into one `ErrorLog` without aborting the
    rest of the cycle.
@@ -115,8 +117,8 @@ Provider details:
 
 ## Models and persistence
 
-`Company` stores the public careers URL, board type, API-enabled flag, and API
-URL. `Job` belongs to a company and is uniquely identified by its globally unique
+`Company` stores the public careers URL, board type, and API URL. `Job` belongs
+to a company and is uniquely identified by its globally unique
 posting URL. `job_id` is provider metadata and is not used for uniqueness.
 `ErrorLog` belongs to a company and also stores snapshots of the company name and
 URLs from the time of failure.
@@ -147,8 +149,8 @@ python manage.py import --file path/to/companies.json
 ```
 
 The import format is a JSON list. Every record requires an explicit positive
-integer `id`, `company_name`, `company_job_url`, `job_board_type`, and `has_api`.
-An enabled API also requires `api_url`.
+integer `id`, `company_name`, `company_job_url`, and `job_board_type`. `api_url`
+is optional; companies without one are skipped during scraping.
 
 Import semantics are intentionally ID-based and non-destructive:
 

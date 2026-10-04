@@ -32,7 +32,6 @@ async def process_job_cycle(
                 company_name=company.company_name,
                 company_job_url=company.company_job_url,
                 job_board_type=company.job_board_type,
-                has_api=company.has_api,
                 api_url=company.api_url,
             )
             for company in companies

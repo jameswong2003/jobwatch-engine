@@ -4,7 +4,6 @@
     "company_name": "NVIDIA",
     "company_job_url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs"
   },
   {
@@ -12,7 +11,6 @@
     "company_name": "Twilio",
     "company_job_url": "https://job-boards.greenhouse.io/twilio/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/twilio/jobs?content=true"
   },
   {
@@ -20,7 +18,6 @@
     "company_name": "Ramp",
     "company_job_url": "https://jobs.ashbyhq.com/ramp",
     "job_board_type": "ASHBY",
-    "has_api": true,
     "api_url": "https://api.ashbyhq.com/posting-api/job-board/ramp?includeCompensation=true"
   },
   {
@@ -28,7 +25,6 @@
     "company_name": "Welocalize",
     "company_job_url": "https://jobs.lever.co/weloglobal",
     "job_board_type": "LEVER",
-    "has_api": true,
     "api_url": "https://api.lever.co/v0/postings/weloglobal"
   },
   {
@@ -36,7 +32,6 @@
     "company_name": "JPMorganChase",
     "company_job_url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/jobs",
     "job_board_type": "ORACLE",
-    "has_api": true,
     "api_url": "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1001,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=150,locationId=300000000289738,sortBy=POSTING_DATES_DESC"
   },
   {
@@ -44,7 +39,6 @@
     "company_name": "Visa",
     "company_job_url": "https://visa.wd5.myworkdayjobs.com/Visa",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://visa.wd5.myworkdayjobs.com/wday/cxs/visa/Visa/jobs"
   },
   {
@@ -52,7 +46,6 @@
     "company_name": "chess.com",
     "company_job_url": "https://ats.rippling.com/chess/jobs",
     "job_board_type": "RIPPLING",
-    "has_api": true,
     "api_url": "https://api.rippling.com/platform/api/ats/v2/board/chess/jobs"
   },
   {
@@ -60,7 +53,6 @@
     "company_name": "Netflix",
     "company_job_url": "https://netflix.wd108.myworkdayjobs.com/Netflix",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://netflix.wd108.myworkdayjobs.com/wday/cxs/netflix/Netflix/jobs"
   },
   {
@@ -68,7 +60,6 @@
     "company_name": "Intel",
     "company_job_url": "https://intel.wd1.myworkdayjobs.com/External",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs"
   },
   {
@@ -76,7 +67,6 @@
     "company_name": "Salesforce",
     "company_job_url": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs"
   },
   {
@@ -84,7 +74,6 @@
     "company_name": "Adobe",
     "company_job_url": "https://adobe.wd5.myworkdayjobs.com/external_experienced",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced/jobs"
   },
   {
@@ -92,7 +81,6 @@
     "company_name": "Amazon",
     "company_job_url": "https://www.amazon.jobs/content/en/job-categories/software-development",
     "job_board_type": "AMAZON",
-    "has_api": true,
     "api_url": "https://amazon.jobs/api/jobs/search?is_als=true"
   },
   {
@@ -100,7 +88,6 @@
     "company_name": "Capital One",
     "company_job_url": "https://capitalone.wd12.myworkdayjobs.com/en-US/Capital_One",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://capitalone.wd12.myworkdayjobs.com/wday/cxs/capitalone/Capital_One/jobs"
   },
   {
@@ -108,7 +95,6 @@
     "company_name": "PDT Partners",
     "company_job_url": "https://job-boards.greenhouse.io/pdtpartners",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/pdtpartners/jobs?content=true"
   },
   {
@@ -116,15 +102,13 @@
     "company_name": "Goldman Sachs",
     "company_job_url": "https://higher.gs.com/results?&page=1&sort=RELEVANCE",
     "job_board_type": "ORACLE",
-    "has_api": true,
     "api_url": "https://hdpc.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_3001,facetsList=WORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS%3BLOCATIONS,limit=25,locationId=300000000229164,sortBy=POSTING_DATES_DESC"
   },
-    {
+  {
     "id": 16,
     "company_name": "Uber",
     "company_job_url": "https://iaziqy.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/UberCareers/jobs?location=United+States&locationId=300000000484560&locationLevel=country&mode=location",
     "job_board_type": "ORACLE",
-    "has_api": true,
     "api_url": "https://iaziqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1,facetsList=WORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS%3BLOCATIONS,limit=25,locationId=300000000484560,sortBy=POSTING_DATES_DESC"
   },
   {
@@ -132,7 +116,6 @@
     "company_name": "BlackRock",
     "company_job_url": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://blackrock.wd1.myworkdayjobs.com/wday/cxs/blackrock/BlackRock_Professional/jobs"
   },
   {
@@ -140,7 +123,6 @@
     "company_name": "Whatnot",
     "company_job_url": "https://jobs.ashbyhq.com/whatnot",
     "job_board_type": "ASHBY",
-    "has_api": true,
     "api_url": "https://api.ashbyhq.com/posting-api/job-board/whatnot?includeCompensation=true"
   },
   {
@@ -148,7 +130,6 @@
     "company_name": "ServiceNow",
     "company_job_url": "https://careers.servicenow.com/jobs/?search=&origin=global",
     "job_board_type": "SMARTRECRUITERS",
-    "has_api": true,
     "api_url": "https://api.smartrecruiters.com/v1/companies/ServiceNow/postings?limit=50"
   },
   {
@@ -156,7 +137,6 @@
     "company_name": "Notion",
     "company_job_url": "https://jobs.ashbyhq.com/notion",
     "job_board_type": "ASHBY",
-    "has_api": true,
     "api_url": "https://api.ashbyhq.com/posting-api/job-board/notion?includeCompensation=true"
   },
   {
@@ -164,7 +144,6 @@
     "company_name": "DoorDash",
     "company_job_url": "https://job-boards.greenhouse.io/doordashusa/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/doordashusa/jobs?content=true"
   },
   {
@@ -172,7 +151,6 @@
     "company_name": "Postman",
     "company_job_url": "https://postman.wd108.myworkdayjobs.com/en-US/careers",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://postman.wd108.myworkdayjobs.com/wday/cxs/postman/careers/jobs"
   },
   {
@@ -180,7 +158,6 @@
     "company_name": "Affirm",
     "company_job_url": "https://job-boards.greenhouse.io/affirm/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/affirm/jobs?content=true"
   },
   {
@@ -188,7 +165,6 @@
     "company_name": "Airbnb",
     "company_job_url": "https://job-boards.greenhouse.io/airbnb/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/airbnb/jobs?content=true"
   },
   {
@@ -196,7 +172,6 @@
     "company_name": "Anduril",
     "company_job_url": "https://job-boards.greenhouse.io/andurilindustries/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/andurilindustries/jobs?content=true"
   },
   {
@@ -204,7 +179,6 @@
     "company_name": "Asana",
     "company_job_url": "https://job-boards.greenhouse.io/asana/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/asana/jobs?content=true"
   },
   {
@@ -212,7 +186,6 @@
     "company_name": "Box",
     "company_job_url": "https://job-boards.greenhouse.io/boxinc/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/boxinc/jobs?content=true"
   },
   {
@@ -220,7 +193,6 @@
     "company_name": "Block",
     "company_job_url": "https://job-boards.greenhouse.io/block/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/block/jobs?content=true"
   },
   {
@@ -228,7 +200,6 @@
     "company_name": "Brex",
     "company_job_url": "https://job-boards.greenhouse.io/brex/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/brex/jobs?content=true"
   },
   {
@@ -236,7 +207,6 @@
     "company_name": "Broadcom",
     "company_job_url": "https://broadcom.wd1.myworkdayjobs.com/External_Career",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career/jobs"
   },
   {
@@ -244,7 +214,6 @@
     "company_name": "Capital Fund Management",
     "company_job_url": "https://www.cfm.com/join-us-cfm-careers/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/cfm/jobs?content=true"
   },
   {
@@ -252,7 +221,6 @@
     "company_name": "Chime",
     "company_job_url": "https://careers.chime.com/jobs/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/chime/jobs?content=true"
   },
   {
@@ -260,7 +228,6 @@
     "company_name": "Cloudfare",
     "company_job_url": "https://www.cloudflare.com/careers/jobs/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/cloudflare/jobs?content=true"
   },
   {
@@ -268,7 +235,6 @@
     "company_name": "Cockroach Labs",
     "company_job_url": "https://www.cockroachlabs.com/careers/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/cockroachlabs/jobs?content=true"
   },
   {
@@ -276,7 +242,6 @@
     "company_name": "Coinbase",
     "company_job_url": "https://www.coinbase.com/careers/positions",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/coinbase/jobs?content=true"
   },
   {
@@ -284,7 +249,6 @@
     "company_name": "Discord",
     "company_job_url": "https://discord.com/careers#all-jobs",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/discord/jobs?content=true"
   },
   {
@@ -292,7 +256,6 @@
     "company_name": "Databricks",
     "company_job_url": "https://www.databricks.com/company/careers/open-positions",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/databricks/jobs?content=true"
   },
   {
@@ -300,7 +263,6 @@
     "company_name": "Datadog",
     "company_job_url": "https://careers.datadoghq.com/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/datadog/jobs?content=true"
   },
   {
@@ -308,7 +270,6 @@
     "company_name": "Elastic",
     "company_job_url": "https://www.elastic.co/careers",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/elastic/jobs?content=true"
   },
   {
@@ -316,7 +277,6 @@
     "company_name": "Figma",
     "company_job_url": "https://www.figma.com/careers/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/figma/jobs?content=true"
   },
   {
@@ -324,7 +284,6 @@
     "company_name": "Fivetran",
     "company_job_url": "https://www.fivetran.com/careers",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/fivetran/jobs?content=true"
   },
   {
@@ -332,7 +291,6 @@
     "company_name": "Gitlab",
     "company_job_url": "https://about.gitlab.com/jobs/all-jobs/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true"
   },
   {
@@ -340,7 +298,6 @@
     "company_name": "InstaCart",
     "company_job_url": "https://www.instacart.careers/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/instacart/jobs?content=true"
   },
   {
@@ -348,7 +305,6 @@
     "company_name": "Lyft",
     "company_job_url": "https://www.lyft.com/careers",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/lyft/jobs?content=true"
   },
   {
@@ -356,7 +312,6 @@
     "company_name": "Palantir",
     "company_job_url": "https://www.palantir.com/careers/",
     "job_board_type": "LEVER",
-    "has_api": true,
     "api_url": "https://api.lever.co/v0/postings/palantir"
   },
   {
@@ -364,7 +319,6 @@
     "company_name": "Pinterest",
     "company_job_url": "https://www.pinterestcareers.com/",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/pinterest/jobs?content=true"
   },
   {
@@ -372,7 +326,6 @@
     "company_name": "Reddit",
     "company_job_url": "https://redditinc.com/careers",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/reddit/jobs?content=true"
   },
   {
@@ -380,7 +333,6 @@
     "company_name": "Stripe",
     "company_job_url": "https://stripe.com/careers/search",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true"
   },
   {
@@ -388,7 +340,6 @@
     "company_name": "Glean",
     "company_job_url": "https://www.glean.com/careers",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/gleanwork/jobs?content=true"
   },
   {
@@ -396,7 +347,6 @@
     "company_name": "Twitch",
     "company_job_url": "https://job-boards.greenhouse.io/twitch",
     "job_board_type": "GREENHOUSE",
-    "has_api": true,
     "api_url": "https://boards-api.greenhouse.io/v1/boards/twitch/jobs?content=true"
   },
   {
@@ -404,7 +354,6 @@
     "company_name": "Wealthfront",
     "company_job_url": "https://jobs.lever.co/wealthfront",
     "job_board_type": "LEVER",
-    "has_api": true,
     "api_url": "https://api.lever.co/v0/postings/wealthfront"
   },
   {
@@ -412,7 +361,6 @@
     "company_name": "Morgan Stanley",
     "company_job_url": "https://www.morganstanley.com/people",
     "job_board_type": "WORKDAY",
-    "has_api": true,
     "api_url": "https://ms.wd5.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs"
   }
 ]

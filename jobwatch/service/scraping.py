@@ -19,7 +19,6 @@ class CompanyConfig:
     company_name: str
     company_job_url: str
     job_board_type: JobBoardType | str
-    has_api: bool
     api_url: Optional[str]
 
     def __post_init__(self) -> None:
@@ -59,8 +58,8 @@ async def process_jobs_from_companies(
     """Scrape all eligible companies and return every normalized posting.
 
     This function does not access a database or filter postings by newness. The
-    caller owns deduplication and persistence. Companies without an enabled API
-    URL are skipped, while one company's scrape failure is returned as a
+    caller owns deduplication and persistence. Companies without an API URL are
+    skipped, while one company's scrape failure is returned as a
     ``ScrapeError`` without preventing other companies from completing.
     """
     concurrency = (
@@ -71,9 +70,7 @@ async def process_jobs_from_companies(
     if not isinstance(concurrency, int) or isinstance(concurrency, bool) or concurrency <= 0:
         raise ValueError("max_concurrent_company_scrapes must be a positive integer")
     scrape_semaphore = asyncio.Semaphore(concurrency)
-    eligible_companies = [
-        company for company in companies if company.has_api and company.api_url
-    ]
+    eligible_companies = [company for company in companies if company.api_url]
 
     async def scrape_company(company: CompanyConfig) -> _CompanyScrapeResult:
         try:

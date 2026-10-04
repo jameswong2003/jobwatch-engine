@@ -40,12 +40,7 @@ def parse_args() -> argparse.Namespace:
         choices=[board.name for board in JobBoardType],
         help="Job board type",
     )
-    add_parser.add_argument("--api-url", default=None, help="Job board API URL (required unless --no-api)")
-    add_parser.add_argument(
-        "--no-api",
-        action="store_true",
-        help="Mark this company as having no scrapable API (skips scraping)",
-    )
+    add_parser.add_argument("--api-url", default=None, help="Job board API URL (companies without one are skipped)")
 
     remove_parser = subparsers.add_parser("remove", help="Remove a company and its jobs/errors")
     remove_parser.add_argument("--name", required=True, help="Company name to remove")
@@ -59,8 +54,6 @@ def parse_args() -> argparse.Namespace:
         "--board-type", type=str, default=None, choices=[b.name for b in JobBoardType],
         help="New job board type",
     )
-    update_parser.add_argument("--enable-api", action="store_true", help="Mark company as having a scrapable API")
-    update_parser.add_argument("--disable-api", action="store_true", help="Mark company as having no scrapable API")
 
     import_parser = subparsers.add_parser("import", help="Import companies from a JSON file by ID")
     import_parser.add_argument(
@@ -81,20 +74,15 @@ def list_companies(board_type: str | None) -> None:
         print("No companies found.")
         return
 
-    print(f"{'ID':<5} {'Name':<30} {'Board Type':<16} {'Has API':<8} API URL")
+    print(f"{'ID':<5} {'Name':<30} {'Board Type':<16} API URL")
     for company in companies:
         print(
             f"{company.id:<5} {company.company_name:<30} {company.job_board_type.name:<16} "
-            f"{str(company.has_api):<8} {company.api_url or '-'}"
+            f"{company.api_url or '-'}"
         )
 
 
-def add_company(name: str, job_url: str, board_type: str, api_url: str | None, no_api: bool) -> None:
-    has_api = not no_api
-    if has_api and not api_url:
-        print("Error: --api-url is required unless --no-api is passed.")
-        return
-
+def add_company(name: str, job_url: str, board_type: str, api_url: str | None) -> None:
     if get_company_by_name(name) is not None:
         print(f"Error: a company named '{name}' already exists.")
         return
@@ -103,8 +91,7 @@ def add_company(name: str, job_url: str, board_type: str, api_url: str | None, n
         company_name=name,
         company_job_url=job_url,
         job_board_type=JobBoardType[board_type],
-        has_api=has_api,
-        api_url=None if no_api else api_url,
+        api_url=api_url,
     )
     print(f"Added company '{name}' with id {company_id}.")
 
@@ -127,19 +114,7 @@ def update_company_handler(
     job_url: str | None,
     api_url: str | None,
     board_type: str | None,
-    enable_api: bool,
-    disable_api: bool,
 ) -> None:
-    if enable_api and disable_api:
-        print("Error: cannot pass both --enable-api and --disable-api.")
-        return
-
-    has_api = None
-    if enable_api:
-        has_api = True
-    elif disable_api:
-        has_api = False
-
     job_board_type = None
     if board_type is not None:
         job_board_type = JobBoardType[board_type]
@@ -149,7 +124,6 @@ def update_company_handler(
         new_name=new_name,
         company_job_url=job_url,
         job_board_type=job_board_type,
-        has_api=has_api,
         api_url=api_url,
     )
     if result is None:
@@ -173,7 +147,7 @@ def _load_companies_file(filepath: str) -> list[dict]:
 
     normalized = []
     seen_ids = set()
-    required_fields = {"id", "company_name", "company_job_url", "job_board_type", "has_api"}
+    required_fields = {"id", "company_name", "company_job_url", "job_board_type"}
 
     for index, company in enumerate(companies, start=1):
         if not isinstance(company, dict):
@@ -200,15 +174,9 @@ def _load_companies_file(filepath: str) -> list[dict]:
             valid_types = ", ".join(JobBoardType.__members__)
             raise ValueError(f"record {index} has invalid job_board_type '{board_type}'; expected one of: {valid_types}")
 
-        has_api = company["has_api"]
-        if not isinstance(has_api, bool):
-            raise ValueError(f"record {index} field 'has_api' must be a boolean")
-
         api_url = company.get("api_url")
         if api_url is not None and (not isinstance(api_url, str) or not api_url.strip()):
             raise ValueError(f"record {index} field 'api_url' must be a non-empty string or null")
-        if has_api and not api_url:
-            raise ValueError(f"record {index} must include 'api_url' when has_api is true")
 
         normalized.append(
             {
@@ -216,7 +184,6 @@ def _load_companies_file(filepath: str) -> list[dict]:
                 "company_name": company["company_name"],
                 "company_job_url": company["company_job_url"],
                 "job_board_type": JobBoardType[board_type],
-                "has_api": has_api,
                 "api_url": api_url,
             }
         )
@@ -227,7 +194,6 @@ def _load_companies_file(filepath: str) -> list[dict]:
 def import_companies(filepath: str) -> bool:
     try:
         companies = _load_companies_file(filepath)
-        init_db()
         counts = upsert_companies(companies)
     except (OSError, ValueError) as exc:
         print(f"Error importing companies: {exc}")
@@ -245,11 +211,12 @@ def import_companies(filepath: str) -> bool:
 
 def main() -> None:
     args = parse_args()
+    init_db()
 
     if args.command == "list":
         list_companies(args.board_type)
     elif args.command == "add":
-        add_company(args.name, args.job_url, args.board_type, args.api_url, args.no_api)
+        add_company(args.name, args.job_url, args.board_type, args.api_url)
     elif args.command == "remove":
         remove_company(args.name)
     elif args.command == "update":
@@ -259,8 +226,6 @@ def main() -> None:
             args.job_url,
             args.api_url,
             args.board_type,
-            args.enable_api,
-            args.disable_api,
         )
     elif args.command == "import":
         if not import_companies(args.file):

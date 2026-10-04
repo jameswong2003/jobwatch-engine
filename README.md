@@ -41,7 +41,6 @@ async def main():
             company_name="Example",
             company_job_url="https://example.com/careers",
             job_board_type=JobBoardType.GREENHOUSE,
-            has_api=True,
             api_url="https://boards-api.greenhouse.io/v1/boards/example/jobs",
         )
     ]
@@ -54,7 +53,7 @@ asyncio.run(main())
 
 The returned job values are `JobCandidate` instances. Each error is a
 `ScrapeError` with company ID/name, source URLs, error message, and occurrence
-time. Companies with `has_api=False` or no `api_url` are skipped. A string board
+time. Companies without an `api_url` are skipped. A string board
 type may be supplied as either its enum value (for example, `"Greenhouse"`) or
 enum name (for example, `"GREENHOUSE"`).
 
@@ -137,7 +136,6 @@ Update supports partial changes — only the flags you pass are updated:
 - `--job-url` — update the public careers page URL
 - `--api-url` — update the API endpoint
 - `--board-type` — change the job board type
-- `--enable-api` / `--disable-api` — mark whether the company has a scrapable API
 
 **List all companies:**
 ```bash

@@ -33,7 +33,6 @@ def insert_company(
     company_name: str,
     company_job_url: str,
     job_board_type: JobBoardType,
-    has_api: bool = False,
     api_url: Optional[str] = None,
 ) -> int:
     """Insert a new company into the database using ORM."""
@@ -43,7 +42,6 @@ def insert_company(
             company_name=company_name,
             company_job_url=company_job_url,
             job_board_type=job_board_type,
-            has_api=has_api,
             api_url=api_url,
         )
         db.add(company)
@@ -72,7 +70,7 @@ def upsert_companies(companies: list[dict]) -> dict[str, int]:
                 continue
 
             changed = False
-            for field in ("company_name", "company_job_url", "job_board_type", "has_api", "api_url"):
+            for field in ("company_name", "company_job_url", "job_board_type", "api_url"):
                 value = company_data[field]
                 if getattr(company, field) != value:
                     setattr(company, field, value)
@@ -117,7 +115,6 @@ def update_company(
     new_name: Optional[str] = None,
     company_job_url: Optional[str] = None,
     job_board_type: Optional[JobBoardType] = None,
-    has_api: Optional[bool] = None,
     api_url: Optional[str] = None,
 ) -> Optional[Company]:
     """
@@ -136,8 +133,6 @@ def update_company(
             company.company_job_url = company_job_url
         if job_board_type is not None:
             company.job_board_type = job_board_type
-        if has_api is not None:
-            company.has_api = has_api
         if api_url is not None:
             company.api_url = api_url
 
