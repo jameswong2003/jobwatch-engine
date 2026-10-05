@@ -1,190 +1,135 @@
 # AGENTS.md
 
-This file provides repository-wide guidance for coding agents working on JobWatch.
-When this file and the implementation disagree, inspect the current code and treat
-the code as the source of truth. Keep this guide updated when behavior changes.
+Guidance for coding agents working in `jobwatch-engine`. The implementation is
+the source of truth; update this guide when architecture or commands change.
 
-## Project overview
+## Project shape
 
-JobWatch polls company job-board APIs, categorizes newly discovered postings,
-and stores them and scrape failures in PostgreSQL. Notifications belong to the
-backend; the public scraping API does not depend on persistence or email.
+The engine is a Python package for scraping and normalizing company job-board
+postings. Its public API is database-independent. A legacy standalone polling
+CLI and SQLAlchemy persistence layer are also included for compatibility; the
+backend owns notification delivery.
 
-The project is a small Python application using SQLAlchemy, blocking `requests`
-scrapers, and an asynchronous polling loop. A small pytest suite runs in GitHub
-Actions. There is currently no migration tool, linter, or build step configured.
+The public API exports `CompanyConfig`, `JobBoardType`, `JobCandidate`,
+`ScrapeError`, and `process_jobs_from_companies` from `jobwatch/__init__.py`.
+`process_jobs_from_companies` skips companies without an API URL, runs blocking
+HTTP calls in worker threads with bounded concurrency, and returns every
+normalized candidate plus per-company scrape errors. It does not query a
+database or remove already-known postings. Callers own deduplication and
+persistence.
 
-## Common commands
-
-```bash
-source venv/bin/activate
-pip install -r requirements.txt
-python main.py
-python main.py --dry-run
-python main.py --company_id 42
-python manage.py list
-python manage.py import --file jobwatch/db/initial_data/companies.json
-python -m jobwatch.db.init_db
-```
-
-Use `python3` instead of `python` when the environment does not provide a
-`python` executable.
-
-`--dry-run` skips writes for scraped jobs/errors and prints a summary; normal
-startup initialization still runs.
-`--company_id` limits each polling cycle to the company with that database ID.
-An unknown ID exits with an error before polling starts. Companies without an
-enabled API continue to be skipped as in an unfiltered run.
-
-Runtime configuration comes from `.env` via `python-dotenv`:
-
-- `DATABASE_URL` is required and must be a SQLAlchemy PostgreSQL URL using
-  `psycopg`, such as `postgresql+psycopg://user:password@localhost:5432/jobwatch`.
-  It may point to a local or remote server. The PostgreSQL server and database
-  must exist before startup; `Base.metadata.create_all()` creates the tables.
-  Startup also removes the retired `company.has_api` column from existing
-  legacy databases.
-- `POLL_INTERVAL_SECONDS` is optional and defaults to `3600`.
+The legacy `main.py` flow initializes the schema and inserts initial company
+data, then repeatedly calls `jobwatch.service.job_processor.process_job_cycle`.
+That adapter queries companies, scrapes through the public API, filters new
+postings by posting URL in a batched query, and writes jobs and scrape errors.
+`manage.py` provides the legacy company-management commands.
 
 ## Repository layout
 
-- `main.py`: thin runtime entrypoint and CLI parsing.
-- `manage.py`: company-management CLI.
-- `jobwatch/service/`: polling orchestration and configuration.
-- `jobwatch/scrapers/`: generic board scrapers and custom company scrapers.
-- `jobwatch/helpers/`: board dispatch, categorization, URL cleanup, and constants.
-- `jobwatch/db/`: engine/session setup, database queries, initialization, and seed
-  data.
-- `jobwatch/models/`: SQLAlchemy ORM models and enums.
+- `jobwatch/__init__.py`: public, database-independent package API.
+- `jobwatch/service/scraping.py`: async orchestration, concurrency limit, and
+  `ScrapeError` creation.
+- `jobwatch/scrapers/`: HTTP client, provider parsers, and `JobCandidate`.
+  Provider-specific integrations may live under `custom_scrapers/`.
+- `jobwatch/helpers/mapper.py`: board dispatch and categorization.
+- `jobwatch/models/job_types.py`: board and job-category enums shared by the
+  public API.
+- `jobwatch/service/config.py`: polling and concurrency environment settings.
+- `jobwatch/db/` and `jobwatch/models/Company.py`, `Job.py`, `ErrorLog.py`:
+  optional legacy SQLAlchemy persistence.
+- `main.py`, `manage.py`: legacy polling and company-management entrypoints.
+- `tests/`: pytest coverage; CI runs it on Python 3.11 with an in-memory SQLite
+  `DATABASE_URL`.
 
-Keep business and database logic in these modules rather than growing the
-entrypoints.
+Keep package scraping behavior independent of the legacy database layer. The
+standalone database imports require `DATABASE_URL`; importing the top-level
+`jobwatch` package for scraping does not.
 
-## Runtime flow
+## Setup and common commands
 
-`main.py` initializes the schema and initial company data, loads configuration,
-and runs `jobwatch.service.job_processor.process_job_cycle` repeatedly, sleeping
-for `POLL_INTERVAL_SECONDS` between cycles. The process continues after a cycle
-failure; `KeyboardInterrupt` stops the loop.
-
-Each polling cycle:
-
-1. Iterates through the loaded `Company` rows.
-2. Skips companies without an `api_url`.
-3. Dispatches to the correct scraper through `helpers.mapper.api_mapper`.
-4. Converts each company-level failure into one `ErrorLog` without aborting the
-   rest of the cycle.
-5. Categorizes new jobs and inserts them in batches.
-6. Inserts error logs from the cycle.
-
-The scrapers are blocking, so async orchestration calls them through
-`asyncio.to_thread`. Do not add blocking network work directly to the event loop.
-
-## Scraper contract
-
-Generic board modules follow three layers:
-
-1. A fetch function calls the remote API with a timeout and returns decoded JSON.
-2. `extract_jobs(...)` maps every valid posting to a database-independent
-   `JobCandidate`.
-3. `get_<board>_jobs(...)` combines fetching and extraction and is called by
-   `api_mapper`.
-
-Important invariants:
-
-- Scrapers and `process_jobs_from_companies` do not query persistence or filter
-  postings by newness. Deduplication belongs to the caller.
-- Pass `company_name` explicitly through every scraper. Do not depend on the API
-  response containing a reliable company name.
-- Network calls should use a finite timeout; existing scrapers use 10 seconds.
-- A malformed or unsuccessful board response should raise a useful exception so
-  the processor can record an `ErrorLog`.
-- New generic board types need an enum value, scraper module, and `api_mapper`
-  branch. Custom providers should follow the Amazon folder pattern under
-  `jobwatch/scrapers/custom_scrapers/`.
-
-Provider details:
-
-- Greenhouse and Ashby use `GET` and return an object containing a `jobs` list.
-- Lever uses `GET` and returns a bare list.
-- Workday uses `POST`; build posting URLs from `Company.company_job_url` and the
-  posting `externalPath`. Use the resulting posting URL as the job identity, like
-  every other provider.
-- Amazon is a custom scraper with a fixed request body and currently limited
-  pagination/filter behavior; verify its intended scope before expanding it.
-- Oracle, SmartRecruiters, and Rippling have provider-specific request shapes;
-  inspect their modules before changing shared assumptions.
-
-## Models and persistence
-
-`Company` stores the public careers URL, board type, and API URL. `Job` belongs
-to a company and is uniquely identified by its globally unique
-posting URL. `job_id` is provider metadata and is not used for uniqueness.
-`ErrorLog` belongs to a company and also stores snapshots of the company name and
-URLs from the time of failure.
-
-Use `job.company.company_name`; `Job` does not have a `company_name` field.
-
-The database engine uses the required `DATABASE_URL` from `.env`; `database.py`
-loads dotenv configuration before creating the engine, including for `manage.py`.
-Database sessions belong in
-`company_queries.py`, `job_queries.py`, or `error_log_queries.py`. Each query
-function should open its own `SessionLocal`, commit or roll back as appropriate,
-and close the session in `finally`.
-
-Company removal explicitly deletes dependent jobs and error logs. Company imports
-accept explicit IDs; after an import PostgreSQL's generated-ID sequence is aligned
-with the largest company ID.
-
-## Managing company data
-
-For a single company, prefer the `manage.py add`, `update`, and `remove` commands.
-The initial startup seed is additive and matches by company name; it does not
-update existing records.
-
-For a shareable company list, use:
+The package requires Python 3.10 or newer. Install the package from this
+directory with:
 
 ```bash
-python manage.py import --file path/to/companies.json
+python3 -m pip install .
 ```
 
-The import format is a JSON list. Every record requires an explicit positive
-integer `id`, `company_name`, `company_job_url`, and `job_board_type`. `api_url`
-is optional; companies without one are skipped during scraping.
+Install the optional legacy database dependencies to use `main.py`,
+`manage.py`, or legacy database modules:
 
-Import semantics are intentionally ID-based and non-destructive:
+```bash
+python3 -m pip install '.[legacy]'
+```
 
-- Existing IDs are updated in place.
-- Missing IDs are inserted with the supplied ID.
-- Companies absent from the file remain in the database.
-- Related jobs and error logs remain attached because rows are updated rather
-  than deleted and reinserted.
-- The complete list is validated before the transaction is committed.
+For backend work against a local checkout, install it editable from the backend
+directory with `python3 -m pip install -e ../jobwatch-engine`.
 
-Do not change this into name-based matching or delete-and-reinsert behavior.
+Useful legacy commands (run from the engine directory):
 
-## Categorization and legacy email helper
+```bash
+python3 main.py
+python3 main.py --dry-run
+python3 main.py --company_id 42
+python3 manage.py list
+python3 manage.py import --file jobwatch/db/initial_data/companies.json
+```
 
-`helpers.filter_constants.JOB_FILTERS` is keyed by `JobCategoryType` values, not
-necessarily enum member names. Convert those values with `JobCategoryType(value)`
-rather than `JobCategoryType[value]`.
+`--dry-run` avoids job and scrape-error writes for the polling cycle, but startup
+still initializes the schema and inserts missing seed companies. The company ID
+option limits a cycle to one database row. The CLI needs a running database and
+an existing database selected by `DATABASE_URL`.
 
-`email_client.py` remains only as an inactive compatibility helper for its
-existing formatting tests. No CLI, polling cycle, or public package API calls
-it; notification delivery is a backend responsibility.
+The legacy CLI loads `.env` through `python-dotenv`. `DATABASE_URL` must be set
+to a SQLAlchemy PostgreSQL URL for normal standalone use, for example
+`postgresql+psycopg://user:password@localhost:5432/jobwatch`. The schema is
+created with SQLAlchemy `create_all`; there is no migration tool. Polling
+defaults to 86400 seconds (`POLL_INTERVAL_SECONDS`), and the scraper concurrency
+defaults to 10 (`MAX_CONCURRENT_COMPANY_SCRAPES`). Concurrency must be a
+positive integer.
 
-## Validation expectations
+## Scraper conventions and invariants
 
-For changes:
+- Return database-independent `JobCandidate` values from provider integrations;
+  pass company ID and company name explicitly.
+- Keep blocking HTTP work out of the event loop. Use the shared request client
+  and finite timeouts; current provider calls use 10 seconds.
+- Preserve each provider's response format and URL rules. Inspect its scraper
+  module before changing shared parsing assumptions.
+- Raise useful exceptions for unsuccessful or malformed responses. The public
+  orchestrator turns company-level exceptions into `ScrapeError` values and
+  continues scraping other companies.
+- When adding a generic board, update `JobBoardType`, add its scraper, and
+  register it in `jobwatch/helpers/mapper.py`. Follow the existing custom
+  scraper structure for provider-specific integrations.
+- Scrapers do not access persistence or filter jobs by newness. In the legacy
+  adapter, `job_posting_url` is the unique identity across providers; `job_id`
+  is provider metadata.
+- `Job` has no `company_name` field. Use the related `job.company.company_name`
+  where a persisted company name is needed.
+- The SQLAlchemy layer is optional. Keep public scraping imports free of
+  database initialization and connection requirements.
 
-- Run `python3 -m py_compile` on touched Python modules.
-- Use focused, isolated checks for the behavior being changed.
-- Use an isolated database for database checks; do not mutate a configured user
-  database during verification.
-- Do not call live job-board APIs or send email unless the task explicitly needs
-  an integration check and the user has supplied the necessary authorization and
-  configuration.
-- Run `git diff --check` and inspect the final diff before handing off.
+## Coding principles
 
-Preserve unrelated working-tree changes and keep refactors separate from the
-requested behavior.
+- Follow YAGNI: implement only what the current requirement needs.
+- Prefer one-liner solutions when they remain clear and maintainable; do not
+  compress complex logic just to reduce line count.
+- Keep changes focused and preserve unrelated working-tree edits.
+
+## Validation
+
+Install the test dependencies and run the suite from the engine directory:
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+DATABASE_URL=sqlite:///:memory: python3 -m pytest
+```
+
+For Python changes, `python3 -m py_compile path/to/module.py` can check touched
+modules. Use mocked HTTP responses for scraper checks and an isolated database
+for persistence checks. Do not run `main.py` as a routine check: it calls live
+job-board APIs and its startup can write schema and seed data. Do not send email
+or use a configured user database during verification.
+
+Before handing off, inspect the diff and run `git diff --check` from this
+repository. Keep refactors and unrelated formatting changes out of the patch.
