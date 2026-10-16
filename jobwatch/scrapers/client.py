@@ -11,6 +11,14 @@ MAX_ATTEMPTS = 4
 RETRY_BACKOFF_SECONDS = 1
 
 
+class HTTPResponseError(ValueError):
+    """An unsuccessful HTTP response with its status code preserved."""
+
+    def __init__(self, message: str, status_code: int):
+        super().__init__(message)
+        self.status_code = status_code
+
+
 def _curl_command(request: requests.PreparedRequest) -> str:
     args = ["curl", "--request", request.method or "GET", request.url or ""]
     for name, value in request.headers.items():
@@ -40,11 +48,11 @@ class _CurlSession(requests.Session):
 
 
 def request_json(method: str, url: str, **kwargs: Any) -> Any:
-    """Send a JSON request, logging cURL and retrying failed requests.
+    """Send a JSON request, logging cURL and retrying timeouts only.
 
-    Network failures and unsuccessful HTTP responses receive up to four total
-    attempts with 1, 2, and 4 second exponential backoff. Final HTTP errors and
-    JSON parsing errors are raised with their response details.
+    Timeout failures receive up to four total attempts with 1, 2, and 4 second
+    exponential backoff. Other request failures, unsuccessful HTTP responses,
+    and JSON parsing errors are raised immediately with their response details.
     """
     timeout = kwargs.pop("timeout", 10)
     with _CurlSession() as session:
@@ -59,12 +67,7 @@ def request_json(method: str, url: str, **kwargs: Any) -> Any:
                     allow_redirects=True,
                     **settings,
                 )
-            except (
-                requests.Timeout,
-                requests.ConnectionError,
-                requests.exceptions.ChunkedEncodingError,
-                requests.exceptions.ContentDecodingError,
-            ) as exc:
+            except requests.Timeout as exc:
                 if attempt + 1 == MAX_ATTEMPTS:
                     raise ValueError(_error_message(None, str(exc))) from exc
                 time.sleep(RETRY_BACKOFF_SECONDS * (2 ** attempt))
@@ -75,10 +78,10 @@ def request_json(method: str, url: str, **kwargs: Any) -> Any:
                 ) from exc
 
             if not response.ok:
-                if attempt + 1 < MAX_ATTEMPTS:
-                    time.sleep(RETRY_BACKOFF_SECONDS * (2 ** attempt))
-                    continue
-                raise ValueError(_error_message(response, response.reason or "HTTP request failed"))
+                raise HTTPResponseError(
+                    _error_message(response, response.reason or "HTTP request failed"),
+                    response.status_code,
+                )
 
             try:
                 return response.json()

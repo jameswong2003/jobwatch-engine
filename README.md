@@ -51,11 +51,46 @@ async def main():
 asyncio.run(main())
 ```
 
+To check stored postings, pass each backend posting ID and provider job ID with
+its company configuration. The engine returns backend posting IDs for jobs
+that returned HTTP 404, plus per-posting errors; unsupported boards are skipped:
+
+```python
+import asyncio
+
+from jobwatch import (
+    CompanyConfig,
+    JobBoardType,
+    JobCheckInput,
+    check_job_activity,
+)
+
+
+async def check_stored_postings():
+    company = CompanyConfig(
+        company_id=1,
+        company_name="Example",
+        company_job_url="https://example.com/careers",
+        job_board_type=JobBoardType.GREENHOUSE,
+        api_url="https://boards-api.greenhouse.io/v1/boards/example/jobs?content=true",
+    )
+    checks = [JobCheckInput(posting_id=101, job_id="8164465", company=company)]
+    inactive_ids, errors = await check_job_activity(checks)
+    print(inactive_ids, errors)
+
+
+asyncio.run(check_stored_postings())
+```
+
 The returned job values are `JobCandidate` instances. Each error is a
 `ScrapeError` with company ID/name, source URLs, error message, and occurrence
 time. Companies without an `api_url` are skipped. A string board
 type may be supplied as either its enum value (for example, `"Greenhouse"`) or
 enum name (for example, `"GREENHOUSE"`).
+
+Activity check failures are returned as `JobActivityError` values and should
+not be used to deactivate postings. `JobCheckInput.posting_id` is the backend
+posting ID returned in `inactive_ids`; `job_id` is the provider's posting ID.
 
 Importing the top-level `jobwatch` package for scraping does not initialize or
 connect to the legacy database. The standalone `main.py` app uses the database
