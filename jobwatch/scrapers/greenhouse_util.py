@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 from jobwatch.scrapers.job_candidate import JobCandidate
 from jobwatch.scrapers.client import HTTPResponseError, request_json
@@ -35,12 +35,19 @@ def get_greenhouse_jobs(api_url: str, company_id: int, company_name: str = "") -
     return extract_jobs(get_jobs(api_url), company_id)
 
 
-def is_greenhouse_job_active(board_token: str, job_id: str) -> bool:
+def is_greenhouse_job_active(api_url: str | None, job_id: str | None) -> bool:
     """Return whether a Greenhouse posting exists; propagate other failures."""
-    if not isinstance(board_token, str) or not board_token.strip():
-        raise ValueError("Greenhouse board token is required")
+    if not isinstance(api_url, str) or not api_url:
+        raise ValueError("Greenhouse API URL is required")
     if not isinstance(job_id, str) or not job_id.strip():
         raise ValueError("Job ID is required")
+
+    path_parts = urlsplit(api_url).path.strip("/").split("/")
+    if len(path_parts) < 3 or path_parts[:2] != ["v1", "boards"]:
+        raise ValueError(f"Invalid Greenhouse API URL: {api_url!r}")
+    board_token = path_parts[2]
+    if not board_token:
+        raise ValueError("Greenhouse board token is required")
 
     url = (
         "https://boards-api.greenhouse.io/v1/boards/"

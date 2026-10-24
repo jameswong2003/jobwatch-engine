@@ -3,10 +3,10 @@
 import asyncio
 from dataclasses import dataclass
 from typing import Optional, Sequence
-from urllib.parse import urlsplit
 
 from jobwatch.models.job_types import JobBoardType
 from jobwatch.scrapers.greenhouse_util import is_greenhouse_job_active
+from jobwatch.scrapers.workday_util import is_workday_job_active
 from jobwatch.service.scraping import CompanyConfig
 
 
@@ -57,26 +57,25 @@ async def check_job_activity(
 
     eligible_postings: list[JobCheckInput] = []
     for posting in postings:
-        # Filter for only greenhouse for now
-        if posting.company.job_board_type is not JobBoardType.GREENHOUSE:
+        if posting.company.job_board_type not in {
+            JobBoardType.GREENHOUSE,
+            JobBoardType.WORKDAY,
+        }:
             continue
         eligible_postings.append(posting)
 
     async def check_posting(posting: JobCheckInput) -> _CheckResult:
         company = posting.company
         try:
-            if not company.api_url:
-                raise ValueError("Greenhouse API URL is required")
-            path_parts = urlsplit(company.api_url).path.strip("/").split("/") # Splits the path to retrieve the board_token
-            if len(path_parts) < 3 or path_parts[:2] != ["v1", "boards"]:
-                raise ValueError(f"Invalid Greenhouse API URL: {company.api_url!r}")
-            board_token = path_parts[2]
-            if not board_token:
-                raise ValueError("Greenhouse board token is required")
             async with semaphore:
-                active = await asyncio.to_thread(
-                    is_greenhouse_job_active, board_token, posting.job_id
-                )
+                if company.job_board_type is JobBoardType.GREENHOUSE:
+                    active = await asyncio.to_thread(
+                        is_greenhouse_job_active, company.api_url, posting.job_id
+                    )
+                else:
+                    active = await asyncio.to_thread(
+                        is_workday_job_active, company.api_url, posting.job_id
+                    )
             return _CheckResult(posting_id=posting.posting_id, inactive=not active)
         except Exception as error:
             return _CheckResult(posting_id=posting.posting_id, error_message=str(error))
