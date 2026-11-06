@@ -6,6 +6,7 @@ from typing import Optional, Sequence
 
 from jobwatch.models.job_types import JobBoardType
 from jobwatch.scrapers.greenhouse_util import is_greenhouse_job_active
+from jobwatch.scrapers.lever_util import is_lever_job_active
 from jobwatch.scrapers.workday_util import is_workday_job_active
 from jobwatch.service.scraping import CompanyConfig
 
@@ -60,6 +61,7 @@ async def check_job_activity(
         if posting.company.job_board_type not in {
             JobBoardType.GREENHOUSE,
             JobBoardType.WORKDAY,
+            JobBoardType.LEVER,
         }:
             continue
         eligible_postings.append(posting)
@@ -72,9 +74,13 @@ async def check_job_activity(
                     active = await asyncio.to_thread(
                         is_greenhouse_job_active, company.api_url, posting.job_id
                     )
-                else:
+                elif company.job_board_type is JobBoardType.WORKDAY:
                     active = await asyncio.to_thread(
                         is_workday_job_active, company.api_url, posting.job_id
+                    )
+                else:
+                    active = await asyncio.to_thread(
+                        is_lever_job_active, company.api_url, posting.job_id
                     )
             return _CheckResult(posting_id=posting.posting_id, inactive=not active)
         except Exception as error:
