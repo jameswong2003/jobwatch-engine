@@ -361,6 +361,48 @@
     "company_name": "Morgan Stanley",
     "company_job_url": "https://www.morganstanley.com/people",
     "job_board_type": "WORKDAY",
-    "api_url": "https://ms.wd5.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs"
+    "api_url": "https://ms.wd5.myworkdayjobs.com/wday/cxs/ms/External/jobs"
+  },
+  {
+    "id": 53,
+    "company_name": "legora",
+    "company_job_url": "https://jobs.ashbyhq.com/legora/572044a8-d0c4-42b4-97d3-bde7cb5599d6/application?utm_source=CC",
+    "job_board_type": "ASHBY",
+    "api_url": "https://api.ashbyhq.com/posting-api/job-board/legora?includeCompensation=true"
+  },
+  {
+    "id": 54,
+    "company_name": "Modern Treasury",
+    "company_job_url": "https://jobs.ashbyhq.com/moderntreasury?utm_source=8knbkgJ73o",
+    "job_board_type": "ASHBY",
+    "api_url": "https://api.ashbyhq.com/posting-api/job-board/moderntreasury?includeCompensation=true"
+  },
+  {
+    "id": 55,
+    "company_name": "Disney",
+    "company_job_url": "https://disney.wd5.myworkdayjobs.com/disneycareer",
+    "job_board_type": "WORKDAY",
+    "api_url": "https://disney.wd5.myworkdayjobs.com/wday/cxs/disney/disneycareer/jobs"
+  },
+  {
+    "id": 56,
+    "company_name": "CLEAR",
+    "company_job_url": "https://job-boards.greenhouse.io/clear",
+    "job_board_type": "GREENHOUSE",
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/clear/jobs?content=true"
+  },
+  {
+    "id": 57,
+    "company_name": "Blackstone",
+    "company_job_url": "https://blackstone.wd1.myworkdayjobs.com/Blackstone_Careers",
+    "job_board_type": "WORKDAY",
+    "api_url": "https://blackstone.wd1.myworkdayjobs.com/wday/cxs/blackstone/Blackstone_Careers/jobs"
+  },
+  {
+    "id": 58,
+    "company_name": "IBM",
+    "company_job_url": "https://www.ibm.com/careers/search?sort=dcdate_desc",
+    "job_board_type": "IBM",
+    "api_url": "https://www-api.ibm.com/search/api/v2"
   }
 ]

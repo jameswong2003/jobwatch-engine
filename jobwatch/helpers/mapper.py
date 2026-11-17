@@ -9,6 +9,7 @@ from jobwatch.scrapers.rippling_util import get_rippling_jobs
 from jobwatch.scrapers.smartrecruiters_util import get_smartrecruiters_jobs
 from jobwatch.scrapers.workday_util import get_workday_jobs
 from jobwatch.scrapers.custom_scrapers.amazon.amazon_scraper import get_amazon_jobs
+from jobwatch.scrapers.custom_scrapers.ibm.ibm_scraper import get_ibm_jobs
 
 
 def api_mapper(
@@ -38,6 +39,8 @@ def api_mapper(
             candidates = get_rippling_jobs(api_url, company_id, company_name)
         case JobBoardType.AMAZON:
             candidates = get_amazon_jobs(company_id, company_name)
+        case JobBoardType.IBM:
+            candidates = get_ibm_jobs(company_id, company_name)
         case _:
             candidates = []
     return categorize_jobs(candidates)

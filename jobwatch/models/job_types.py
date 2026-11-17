@@ -32,4 +32,5 @@ class JobBoardType(enum.Enum):
     RIPPLING = "Rippling"
     CUSTOM = "Custom"
     AMAZON = "Amazon"
+    IBM = "IBM"
     OTHER = "Other"
