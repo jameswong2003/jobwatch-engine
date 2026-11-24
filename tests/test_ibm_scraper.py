@@ -69,7 +69,7 @@ def test_ibm_public_scrape_posts_payload_and_categorizes(monkeypatch):
         return {"hits": {"hits": [posting()]}, "aggregations": {"ignored": True}}
 
     monkeypatch.setattr(ibm_scraper, "request_json", request_json)
-    company = CompanyConfig(42, "IBM", "https://careers.ibm.com", "IBM", ibm_scraper.API_URL)
+    company = CompanyConfig(42, "IBM", "https://careers.ibm.com", "IBM", {"url": ibm_scraper.API_URL})
     jobs, errors = asyncio.run(process_jobs_from_companies([company]))
 
     assert errors == []
@@ -96,7 +96,7 @@ def test_ibm_public_scrape_reports_company_error(monkeypatch, failure):
         return failure
 
     monkeypatch.setattr(ibm_scraper, "request_json", request_json)
-    company = CompanyConfig(42, "IBM", "https://careers.ibm.com", JobBoardType.IBM, ibm_scraper.API_URL)
+    company = CompanyConfig(42, "IBM", "https://careers.ibm.com", JobBoardType.IBM, {"url": ibm_scraper.API_URL})
     jobs, errors = asyncio.run(process_jobs_from_companies([company]))
 
     assert jobs == []

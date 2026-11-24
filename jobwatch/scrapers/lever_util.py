@@ -1,6 +1,6 @@
 import logging
 from datetime import date, datetime, timezone
-from typing import Dict, List
+from typing import Any, Dict, List
 from urllib.parse import quote, urlsplit
 
 from jobwatch.scrapers.job_candidate import JobCandidate
@@ -35,8 +35,8 @@ def extract_jobs(json_data: List[Dict], company_id: int) -> list[JobCandidate]:
     return jobs
 
 
-def get_lever_jobs(api_url: str, company_id: int, company_name: str = "") -> list[JobCandidate]:
-    return extract_jobs(get_jobs(api_url), company_id)
+def get_lever_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
+    return extract_jobs(get_jobs(api_config["url"]), company_id)
 
 
 def is_lever_job_active(api_url: str | None, job_id: str | None) -> bool:

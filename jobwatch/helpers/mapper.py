@@ -1,3 +1,5 @@
+from typing import Any
+
 from jobwatch.models.job_types import JobBoardType
 from jobwatch.helpers.job_sorter import categorize_jobs
 from jobwatch.scrapers.job_candidate import JobCandidate
@@ -16,31 +18,31 @@ def api_mapper(
     job_board_type: JobBoardType,
     company_id: int,
     company_name: str,
-    api_url: str,
+    api_config: dict[str, Any],
     company_job_url: str,
 ) -> list[JobCandidate]:
     """Scrape and normalize postings without consulting persistence."""
     match job_board_type:
         case JobBoardType.ASHBY:
-            candidates = get_ashby_jobs(api_url, company_id, company_name)
+            candidates = get_ashby_jobs(api_config, company_id, company_name)
         case JobBoardType.GREENHOUSE:
-            candidates = get_greenhouse_jobs(api_url, company_id, company_name)
+            candidates = get_greenhouse_jobs(api_config, company_id, company_name)
         case JobBoardType.WORKDAY:
             if not isinstance(company_job_url, str) or not company_job_url.strip():
                 raise ValueError(f"Workday company {company_name!r} requires a non-empty company_job_url")
-            candidates = get_workday_jobs(api_url, company_id, company_name, company_job_url)
+            candidates = get_workday_jobs(api_config, company_id, company_name, company_job_url)
         case JobBoardType.LEVER:
-            candidates = get_lever_jobs(api_url, company_id, company_name)
+            candidates = get_lever_jobs(api_config, company_id, company_name)
         case JobBoardType.ORACLE:
-            candidates = get_oracle_cloud_jobs(api_url, company_id, company_name)
+            candidates = get_oracle_cloud_jobs(api_config, company_id, company_name)
         case JobBoardType.SMARTRECRUITERS:
-            candidates = get_smartrecruiters_jobs(api_url, company_id, company_name)
+            candidates = get_smartrecruiters_jobs(api_config, company_id, company_name)
         case JobBoardType.RIPPLING:
-            candidates = get_rippling_jobs(api_url, company_id, company_name)
+            candidates = get_rippling_jobs(api_config, company_id, company_name)
         case JobBoardType.AMAZON:
-            candidates = get_amazon_jobs(company_id, company_name)
+            candidates = get_amazon_jobs(api_config, company_id, company_name)
         case JobBoardType.IBM:
-            candidates = get_ibm_jobs(company_id, company_name)
+            candidates = get_ibm_jobs(api_config, company_id, company_name)
         case _:
             candidates = []
     return categorize_jobs(candidates)

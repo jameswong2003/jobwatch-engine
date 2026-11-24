@@ -12,7 +12,9 @@ backend owns notification delivery.
 
 The public API exports `CompanyConfig`, `JobBoardType`, `JobCandidate`,
 `ScrapeError`, and `process_jobs_from_companies` from `jobwatch/__init__.py`.
-`process_jobs_from_companies` skips companies without an API URL, runs blocking
+`CompanyConfig.api_config` is a dictionary passed through board dispatch to each
+provider utility, which owns interpreting its configuration.
+`process_jobs_from_companies` skips companies without `api_config.url`, runs blocking
 HTTP calls in worker threads with bounded concurrency, and returns every
 normalized candidate plus per-company scrape errors. It does not query a
 database or remove already-known postings. Callers own deduplication and
@@ -82,7 +84,9 @@ an existing database selected by `DATABASE_URL`.
 The legacy CLI loads `.env` through `python-dotenv`. `DATABASE_URL` must be set
 to a SQLAlchemy PostgreSQL URL for normal standalone use, for example
 `postgresql+psycopg://user:password@localhost:5432/jobwatch`. The schema is
-created with SQLAlchemy `create_all`; there is no migration tool. Polling
+created with SQLAlchemy `create_all`; startup also upgrades legacy `company.api_url`
+values to JSON `api_config` objects before queries. The CLI accepts `--api-config`
+as a JSON object, and seed/import records use `api_config`. Polling
 defaults to 86400 seconds (`POLL_INTERVAL_SECONDS`), and the scraper concurrency
 defaults to 10 (`MAX_CONCURRENT_COMPANY_SCRAPES`). Concurrency must be a
 positive integer.

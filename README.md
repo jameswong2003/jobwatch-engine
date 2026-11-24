@@ -41,7 +41,7 @@ async def main():
             company_name="Example",
             company_job_url="https://example.com/careers",
             job_board_type=JobBoardType.GREENHOUSE,
-            api_url="https://boards-api.greenhouse.io/v1/boards/example/jobs",
+            api_config={"url": "https://boards-api.greenhouse.io/v1/boards/example/jobs"},
         )
     ]
     jobs, errors = await process_jobs_from_companies(companies)
@@ -72,7 +72,7 @@ async def check_stored_postings():
         company_name="Example",
         company_job_url="https://example.com/careers",
         job_board_type=JobBoardType.GREENHOUSE,
-        api_url="https://boards-api.greenhouse.io/v1/boards/example/jobs?content=true",
+        api_config={"url": "https://boards-api.greenhouse.io/v1/boards/example/jobs?content=true"},
     )
     checks = [JobCheckInput(posting_id=101, job_id="8164465", company=company)]
     inactive_ids, errors = await check_job_activity(checks)
@@ -84,7 +84,10 @@ asyncio.run(check_stored_postings())
 
 The returned job values are `JobCandidate` instances. Each error is a
 `ScrapeError` with company ID/name, source URLs, error message, and occurrence
-time. Companies without an `api_url` are skipped. A string board
+time. `api_config` is a dictionary whose `url` key supplies the current endpoint.
+The full configuration passes through board dispatch to each provider utility,
+which reads the fields it needs. Companies without
+a URL are skipped. A string board
 type may be supplied as either its enum value (for example, `"Greenhouse"`) or
 enum name (for example, `"GREENHOUSE"`).
 
@@ -158,18 +161,18 @@ Use `manage.py` to add a new company or update an existing one:
 **Add a new company:**
 ```bash
 python manage.py add --name "Example Corp" --job-url "https://jobs.example.com/careers" \
-  --board-type GREENHOUSE --api-url "https://boards-api.greenhouse.io/v1/boards/example/jobs?content=true"
+  --board-type GREENHOUSE --api-config '{"url":"https://boards-api.greenhouse.io/v1/boards/example/jobs?content=true"}'
 ```
 
 **Update an existing company** (e.g., after a board API URL changes):
 ```bash
-python manage.py update --name "Example Corp" --api-url "https://new-api-url.example.com"
+python manage.py update --name "Example Corp" --api-config '{"url":"https://new-api-url.example.com"}'
 ```
 
 Update supports partial changes — only the flags you pass are updated:
 - `--new-name` — rename the company
 - `--job-url` — update the public careers page URL
-- `--api-url` — update the API endpoint
+- `--api-config` — replace the API configuration with a JSON object. Use `{}` to clear it
 - `--board-type` — change the job board type
 
 **List all companies:**
@@ -188,7 +191,9 @@ python manage.py import --file jobwatch/db/initial_data/companies.json
 ```
 
 The file must contain a list of company records with explicit, unique numeric
-`id` values. Existing rows are updated by `id`, new rows are inserted, and
+`id` values and an `api_config` object. Additional configuration keys are
+preserved. Files using the retired `api_url` field must be converted to
+`api_config` before import. Existing rows are updated by `id`, new rows are inserted, and
 companies missing from the file are left unchanged. Related jobs and error logs
 are preserved. The `--file` argument defaults to the repository's
 `jobwatch/db/initial_data/companies.json` file.
@@ -206,9 +211,11 @@ On a fresh install, `main.py` automatically creates the database and seeds compa
 Jobs are persisted in the PostgreSQL database selected by `DATABASE_URL`. The
 same setting is loaded from `.env` for `main.py`, `manage.py`, and direct database
 module use. The schema is created from the SQLAlchemy models when the app starts;
-there is no migration system. The schema includes:
+startup also upgrades an existing standalone `company.api_url` column to
+`api_config`, preserving URLs as `{"url": "..."}` and null URLs as `{}`.
+The configuration uses JSONB on PostgreSQL. The schema includes:
 
-- **Company**: Stores board type, job board URL, and API endpoint for each company
+- **Company**: Stores board type, job board URL, and API configuration for each company
 - **Job**: Job title, posting URL, date posted, date added, category, and link to company
 - **ErrorLog**: Scrape failures with company name, original URLs, and error message snapshots for manual triage
 

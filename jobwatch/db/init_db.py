@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 
 from jobwatch.db.database import Base, engine, SessionLocal, sync_company_id_sequence
 from jobwatch.models.Company import Company
@@ -8,10 +8,29 @@ import os, json
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    # create_all does not remove columns from existing tables. Drop the retired
-    # flag so legacy databases can insert companies with the current model.
+    # The standalone schema has no Alembic runner, so upgrade legacy rows here.
     with engine.begin() as connection:
-        connection.execute(text("ALTER TABLE company DROP COLUMN IF EXISTS has_api"))
+        if connection.dialect.name == "postgresql":
+            connection.execute(text("LOCK TABLE company IN ACCESS EXCLUSIVE MODE"))
+        columns = {column["name"] for column in inspect(connection).get_columns("company")}
+        if "api_url" in columns:
+            if connection.dialect.name == "postgresql":
+                if "api_config" not in columns:
+                    connection.execute(text("ALTER TABLE company ADD COLUMN api_config JSONB NOT NULL DEFAULT '{}'::jsonb"))
+                connection.execute(text(
+                    "UPDATE company SET api_config = jsonb_build_object('url', api_url) || api_config "
+                    "WHERE api_url IS NOT NULL"
+                ))
+            else:
+                if "api_config" not in columns:
+                    connection.execute(text("ALTER TABLE company ADD COLUMN api_config JSON NOT NULL DEFAULT '{}'"))
+                connection.execute(text(
+                    "UPDATE company SET api_config = json_insert(api_config, '$.url', api_url) "
+                    "WHERE api_url IS NOT NULL"
+                ))
+            connection.execute(text("ALTER TABLE company DROP COLUMN api_url"))
+        if "has_api" in columns:
+            connection.execute(text("ALTER TABLE company DROP COLUMN has_api"))
 
 def insert_initial_companies():
     db = SessionLocal()

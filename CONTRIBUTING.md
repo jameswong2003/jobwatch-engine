@@ -33,7 +33,8 @@ existing module pattern:
 2. Extract new postings with the company name passed explicitly. Look up the
    company once and fetch existing posting keys in one batched database query;
    do not add a database lookup for each posting.
-3. Expose a `get_<board>_jobs(...)` function and register the board in
+3. Expose a `get_<board>_jobs(api_config, company_id, company_name, ...)` function
+   that reads the provider configuration, and register the board in
    `jobwatch/helpers/mapper.py` and `JobBoardType` when adding a generic board.
 
 Preserve the provider's response shape and URL rules. In particular, inspect

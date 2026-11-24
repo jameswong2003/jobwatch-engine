@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Any
 from urllib.parse import urlparse
 
 from jobwatch.scrapers.job_candidate import JobCandidate
@@ -32,6 +33,6 @@ def extract_jobs(json_data: dict, company_id: int, base_url: str) -> list[JobCan
     return jobs
 
 
-def get_oracle_cloud_jobs(api_url: str, company_id: int, company_name: str = "") -> list[JobCandidate]:
-    json_data, base_url = get_jobs(api_url)
+def get_oracle_cloud_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
+    json_data, base_url = get_jobs(api_config["url"])
     return extract_jobs(json_data, company_id, base_url)

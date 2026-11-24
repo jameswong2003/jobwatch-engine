@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Any
 
 from jobwatch.scrapers.job_candidate import JobCandidate
 from jobwatch.scrapers.client import request_json
@@ -28,5 +29,5 @@ def extract_jobs(json_data: dict, company_id: int) -> list[JobCandidate]:
     return jobs
 
 
-def get_ashby_jobs(api_url: str, company_id: int, company_name: str = "") -> list[JobCandidate]:
-    return extract_jobs(get_jobs(api_url), company_id)
+def get_ashby_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
+    return extract_jobs(get_jobs(api_config["url"]), company_id)

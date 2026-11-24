@@ -3,7 +3,7 @@ from jobwatch.db.init_db import SessionLocal
 from jobwatch.models.Company import Company, JobBoardType
 from jobwatch.models.Job import Job
 from jobwatch.models.ErrorLog import ErrorLog
-from typing import Optional
+from typing import Any, Optional
 
 def get_all_companies() -> list[Company]:
     """Fetch all companies from the database using ORM."""
@@ -33,7 +33,7 @@ def insert_company(
     company_name: str,
     company_job_url: str,
     job_board_type: JobBoardType,
-    api_url: Optional[str] = None,
+    api_config: Optional[dict[str, Any]] = None,
 ) -> int:
     """Insert a new company into the database using ORM."""
     db = SessionLocal()
@@ -42,7 +42,7 @@ def insert_company(
             company_name=company_name,
             company_job_url=company_job_url,
             job_board_type=job_board_type,
-            api_url=api_url,
+            api_config={} if api_config is None else api_config,
         )
         db.add(company)
         db.commit()
@@ -70,7 +70,7 @@ def upsert_companies(companies: list[dict]) -> dict[str, int]:
                 continue
 
             changed = False
-            for field in ("company_name", "company_job_url", "job_board_type", "api_url"):
+            for field in ("company_name", "company_job_url", "job_board_type", "api_config"):
                 value = company_data[field]
                 if getattr(company, field) != value:
                     setattr(company, field, value)
@@ -115,7 +115,7 @@ def update_company(
     new_name: Optional[str] = None,
     company_job_url: Optional[str] = None,
     job_board_type: Optional[JobBoardType] = None,
-    api_url: Optional[str] = None,
+    api_config: Optional[dict[str, Any]] = None,
 ) -> Optional[Company]:
     """
     Partially update a company by current name. Only non-None fields are changed.
@@ -133,8 +133,8 @@ def update_company(
             company.company_job_url = company_job_url
         if job_board_type is not None:
             company.job_board_type = job_board_type
-        if api_url is not None:
-            company.api_url = api_url
+        if api_config is not None:
+            company.api_config = api_config
 
         db.commit()
         db.refresh(company)

@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 import logging
 from urllib.parse import quote, urlsplit, urlunsplit
 
@@ -27,8 +28,8 @@ def extract_jobs(json_data: dict, company_id: int, company_job_url: str) -> list
     return jobs
 
 
-def get_workday_jobs(api_url: str, company_id: int, company_name: str, company_job_url: str) -> list[JobCandidate]:
-    return extract_jobs(get_jobs(api_url), company_id, company_job_url)
+def get_workday_jobs(api_config: dict[str, Any], company_id: int, company_name: str, company_job_url: str) -> list[JobCandidate]:
+    return extract_jobs(get_jobs(api_config["url"]), company_id, company_job_url)
 
 
 def is_workday_job_active(api_url: str | None, job_path: str | None) -> bool:

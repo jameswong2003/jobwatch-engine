@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Any
 
-from sqlalchemy import Enum, Integer, Text
+from sqlalchemy import Enum, Integer, JSON, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from jobwatch.db.database import Base
 
@@ -13,4 +14,6 @@ class Company(Base):
     company_name: Mapped[str] = mapped_column(Text, nullable=False)
     company_job_url: Mapped[str] = mapped_column(Text, nullable=False)
     job_board_type: Mapped[JobBoardType] = mapped_column(Enum(JobBoardType, name="job_board_enum"), nullable=False)
-    api_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    api_config: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=False, default=dict, server_default="{}",
+    )

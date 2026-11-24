@@ -72,15 +72,15 @@ async def check_job_activity(
             async with semaphore:
                 if company.job_board_type is JobBoardType.GREENHOUSE:
                     active = await asyncio.to_thread(
-                        is_greenhouse_job_active, company.api_url, posting.job_id
+                        is_greenhouse_job_active, company.api_config.get("url"), posting.job_id
                     )
                 elif company.job_board_type is JobBoardType.WORKDAY:
                     active = await asyncio.to_thread(
-                        is_workday_job_active, company.api_url, posting.job_id
+                        is_workday_job_active, company.api_config.get("url"), posting.job_id
                     )
                 else:
                     active = await asyncio.to_thread(
-                        is_lever_job_active, company.api_url, posting.job_id
+                        is_lever_job_active, company.api_config.get("url"), posting.job_id
                     )
             return _CheckResult(posting_id=posting.posting_id, inactive=not active)
         except Exception as error:

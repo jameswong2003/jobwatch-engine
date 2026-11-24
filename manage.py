@@ -12,9 +12,21 @@ from jobwatch.db.company_queries import (
 )
 from jobwatch.db.init_db import init_db
 from jobwatch.models.Company import JobBoardType
+from jobwatch.service.scraping import CompanyConfig
 
 
 DEFAULT_COMPANIES_FILE = Path(__file__).resolve().parent / "jobwatch" / "db" / "initial_data" / "companies.json"
+
+
+def _parse_api_config(value: str) -> dict:
+    try:
+        config = json.loads(value)
+        CompanyConfig(0, "", "", JobBoardType.OTHER, config)
+        if isinstance(config.get("url"), str) and not config["url"].strip():
+            raise ValueError("api_config.url must be a non-empty string or null")
+    except (ValueError, TypeError) as error:
+        raise argparse.ArgumentTypeError(f"invalid API configuration: {error}") from error
+    return config
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,7 +52,7 @@ def parse_args() -> argparse.Namespace:
         choices=[board.name for board in JobBoardType],
         help="Job board type",
     )
-    add_parser.add_argument("--api-url", default=None, help="Job board API URL (companies without one are skipped)")
+    add_parser.add_argument("--api-config", type=_parse_api_config, default={}, help='Job board configuration as JSON, e.g. {"url":"https://example.com/jobs"}')
 
     remove_parser = subparsers.add_parser("remove", help="Remove a company and its jobs/errors")
     remove_parser.add_argument("--name", required=True, help="Company name to remove")
@@ -49,7 +61,7 @@ def parse_args() -> argparse.Namespace:
     update_parser.add_argument("--name", required=True, help="Current company name")
     update_parser.add_argument("--new-name", default=None, help="Rename the company")
     update_parser.add_argument("--job-url", default=None, help="New public careers page URL")
-    update_parser.add_argument("--api-url", default=None, help="New job board API URL")
+    update_parser.add_argument("--api-config", type=_parse_api_config, default=None, help="New job board configuration as a JSON object")
     update_parser.add_argument(
         "--board-type", type=str, default=None, choices=[b.name for b in JobBoardType],
         help="New job board type",
@@ -74,15 +86,15 @@ def list_companies(board_type: str | None) -> None:
         print("No companies found.")
         return
 
-    print(f"{'ID':<5} {'Name':<30} {'Board Type':<16} API URL")
+    print(f"{'ID':<5} {'Name':<30} {'Board Type':<16} API CONFIG")
     for company in companies:
         print(
             f"{company.id:<5} {company.company_name:<30} {company.job_board_type.name:<16} "
-            f"{company.api_url or '-'}"
+            f"{json.dumps(company.api_config)}"
         )
 
 
-def add_company(name: str, job_url: str, board_type: str, api_url: str | None) -> None:
+def add_company(name: str, job_url: str, board_type: str, api_config: dict | None) -> None:
     if get_company_by_name(name) is not None:
         print(f"Error: a company named '{name}' already exists.")
         return
@@ -91,7 +103,7 @@ def add_company(name: str, job_url: str, board_type: str, api_url: str | None) -
         company_name=name,
         company_job_url=job_url,
         job_board_type=JobBoardType[board_type],
-        api_url=api_url,
+        api_config=api_config,
     )
     print(f"Added company '{name}' with id {company_id}.")
 
@@ -112,7 +124,7 @@ def update_company_handler(
     name: str,
     new_name: str | None,
     job_url: str | None,
-    api_url: str | None,
+    api_config: dict | None,
     board_type: str | None,
 ) -> None:
     job_board_type = None
@@ -124,7 +136,7 @@ def update_company_handler(
         new_name=new_name,
         company_job_url=job_url,
         job_board_type=job_board_type,
-        api_url=api_url,
+        api_config=api_config,
     )
     if result is None:
         print(f"Error: no company named '{name}' found.")
@@ -147,7 +159,7 @@ def _load_companies_file(filepath: str) -> list[dict]:
 
     normalized = []
     seen_ids = set()
-    required_fields = {"id", "company_name", "company_job_url", "job_board_type"}
+    required_fields = {"id", "company_name", "company_job_url", "job_board_type", "api_config"}
 
     for index, company in enumerate(companies, start=1):
         if not isinstance(company, dict):
@@ -174,9 +186,12 @@ def _load_companies_file(filepath: str) -> list[dict]:
             valid_types = ", ".join(JobBoardType.__members__)
             raise ValueError(f"record {index} has invalid job_board_type '{board_type}'; expected one of: {valid_types}")
 
-        api_url = company.get("api_url")
-        if api_url is not None and (not isinstance(api_url, str) or not api_url.strip()):
-            raise ValueError(f"record {index} field 'api_url' must be a non-empty string or null")
+        if "api_url" in company:
+            raise ValueError(f"record {index} uses retired field 'api_url'; use 'api_config'")
+        api_config = company["api_config"]
+        CompanyConfig(company_id, company["company_name"], company["company_job_url"], board_type, api_config)
+        if isinstance(api_config.get("url"), str) and not api_config["url"].strip():
+            raise ValueError(f"record {index} field 'api_config.url' must be a non-empty string or null")
 
         normalized.append(
             {
@@ -184,7 +199,7 @@ def _load_companies_file(filepath: str) -> list[dict]:
                 "company_name": company["company_name"],
                 "company_job_url": company["company_job_url"],
                 "job_board_type": JobBoardType[board_type],
-                "api_url": api_url,
+                "api_config": api_config,
             }
         )
 
@@ -216,7 +231,7 @@ def main() -> None:
     if args.command == "list":
         list_companies(args.board_type)
     elif args.command == "add":
-        add_company(args.name, args.job_url, args.board_type, args.api_url)
+        add_company(args.name, args.job_url, args.board_type, args.api_config)
     elif args.command == "remove":
         remove_company(args.name)
     elif args.command == "update":
@@ -224,7 +239,7 @@ def main() -> None:
             args.name,
             args.new_name,
             args.job_url,
-            args.api_url,
+            args.api_config,
             args.board_type,
         )
     elif args.command == "import":

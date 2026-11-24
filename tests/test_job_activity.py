@@ -18,7 +18,7 @@ def _company(
         company_name="Twilio",
         company_job_url="https://twilio.com/careers",
         job_board_type=board_type,
-        api_url=api_url,
+        api_config={} if api_url is None else {"url": api_url},
     )
 
 
@@ -170,7 +170,7 @@ def test_check_job_activity_returns_inactive_ids_errors_and_skips_other_boards(
         JobCheckInput(posting_id=101, job_id="active", company=greenhouse),
         JobCheckInput(posting_id=102, job_id="missing", company=greenhouse),
         JobCheckInput(posting_id=103, job_id="broken", company=greenhouse),
-        JobCheckInput(posting_id=104, job_id="other", company=_company(JobBoardType.LEVER)),
+        JobCheckInput(posting_id=104, job_id="other", company=_company(JobBoardType.ASHBY)),
     ]
 
     inactive_ids, errors = asyncio.run(check_job_activity(postings))

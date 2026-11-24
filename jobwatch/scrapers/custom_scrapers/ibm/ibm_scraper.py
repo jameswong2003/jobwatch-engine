@@ -110,5 +110,5 @@ def extract_jobs(json_data: dict[str, Any], company_id: int) -> list[JobCandidat
     return candidates
 
 
-def get_ibm_jobs(company_id: int, company_name: str = "") -> list[JobCandidate]:
+def get_ibm_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
     return extract_jobs(get_jobs(), company_id)

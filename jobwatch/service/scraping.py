@@ -3,7 +3,7 @@
 import asyncio
 import datetime
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from jobwatch.helpers.mapper import api_mapper
 from jobwatch.models.job_types import JobBoardType
@@ -19,9 +19,14 @@ class CompanyConfig:
     company_name: str
     company_job_url: str
     job_board_type: JobBoardType | str
-    api_url: Optional[str]
+    api_config: dict[str, Any]
 
     def __post_init__(self) -> None:
+        if not isinstance(self.api_config, dict):
+            raise ValueError("api_config must be a dictionary")
+        url = self.api_config.get("url")
+        if url is not None and not isinstance(url, str):
+            raise ValueError("api_config.url must be a string or null")
         if isinstance(self.job_board_type, str):
             try:
                 object.__setattr__(self, "job_board_type", JobBoardType(self.job_board_type))
@@ -70,7 +75,7 @@ async def process_jobs_from_companies(
     if not isinstance(concurrency, int) or isinstance(concurrency, bool) or concurrency <= 0:
         raise ValueError("max_concurrent_company_scrapes must be a positive integer")
     scrape_semaphore = asyncio.Semaphore(concurrency)
-    eligible_companies = [company for company in companies if company.api_url]
+    eligible_companies = [company for company in companies if company.api_config.get("url")]
 
     async def scrape_company(company: CompanyConfig) -> _CompanyScrapeResult:
         try:
@@ -80,7 +85,7 @@ async def process_jobs_from_companies(
                     company.job_board_type,
                     company.company_id,
                     company.company_name,
-                    company.api_url,
+                    company.api_config,
                     company.company_job_url,
                 )
             return _CompanyScrapeResult(company=company, jobs=jobs)
@@ -97,7 +102,7 @@ async def process_jobs_from_companies(
                 ScrapeError(
                     company_id=company.company_id,
                     company_name=company.company_name,
-                    original_api_url=company.api_url,
+                    original_api_url=company.api_config.get("url"),
                     original_company_job_url=company.company_job_url,
                     error_message=result.error_message,
                     occurred_at=datetime.datetime.utcnow(),
