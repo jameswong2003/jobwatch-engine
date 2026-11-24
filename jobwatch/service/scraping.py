@@ -60,11 +60,11 @@ async def process_jobs_from_companies(
     companies: Sequence[CompanyConfig],
     max_concurrent_company_scrapes: Optional[int] = None,
 ) -> tuple[list[JobCandidate], list[ScrapeError]]:
-    """Scrape all eligible companies and return every normalized posting.
+    """Scrape configured companies and return every normalized posting.
 
     This function does not access a database or filter postings by newness. The
-    caller owns deduplication and persistence. Companies without an API URL are
-    skipped, while one company's scrape failure is returned as a
+    caller owns deduplication and persistence. Each provider validates its own
+    configuration, while one company's scrape failure is returned as a
     ``ScrapeError`` without preventing other companies from completing.
     """
     concurrency = (
@@ -75,24 +75,16 @@ async def process_jobs_from_companies(
     if not isinstance(concurrency, int) or isinstance(concurrency, bool) or concurrency <= 0:
         raise ValueError("max_concurrent_company_scrapes must be a positive integer")
     scrape_semaphore = asyncio.Semaphore(concurrency)
-    eligible_companies = [company for company in companies if company.api_config.get("url")]
 
     async def scrape_company(company: CompanyConfig) -> _CompanyScrapeResult:
         try:
             async with scrape_semaphore:
-                jobs = await asyncio.to_thread(
-                    api_mapper,
-                    company.job_board_type,
-                    company.company_id,
-                    company.company_name,
-                    company.api_config,
-                    company.company_job_url,
-                )
+                jobs = await asyncio.to_thread(api_mapper, company)
             return _CompanyScrapeResult(company=company, jobs=jobs)
         except Exception as error:
             return _CompanyScrapeResult(company=company, error_message=str(error))
 
-    results = await asyncio.gather(*(scrape_company(company) for company in eligible_companies))
+    results = await asyncio.gather(*(scrape_company(company) for company in companies))
     jobs: list[JobCandidate] = []
     errors: list[ScrapeError] = []
     for result in results:
@@ -102,7 +94,7 @@ async def process_jobs_from_companies(
                 ScrapeError(
                     company_id=company.company_id,
                     company_name=company.company_name,
-                    original_api_url=company.api_config.get("url"),
+                    original_api_url=None,
                     original_company_job_url=company.company_job_url,
                     error_message=result.error_message,
                     occurred_at=datetime.datetime.utcnow(),

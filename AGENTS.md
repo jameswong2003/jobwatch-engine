@@ -14,8 +14,9 @@ The public API exports `CompanyConfig`, `JobBoardType`, `JobCandidate`,
 `ScrapeError`, and `process_jobs_from_companies` from `jobwatch/__init__.py`.
 `CompanyConfig.api_config` is a dictionary passed through board dispatch to each
 provider utility, which owns interpreting its configuration.
-`process_jobs_from_companies` skips companies without `api_config.url`, runs blocking
-HTTP calls in worker threads with bounded concurrency, and returns every
+`process_jobs_from_companies` dispatches company configurations to provider utilities,
+which validate required fields. It runs blocking HTTP calls in worker threads
+with bounded concurrency and returns every
 normalized candidate plus per-company scrape errors. It does not query a
 database or remove already-known postings. Callers own deduplication and
 persistence.
@@ -93,8 +94,9 @@ positive integer.
 
 ## Scraper conventions and invariants
 
-- Return database-independent `JobCandidate` values from provider integrations;
-  pass company ID and company name explicitly.
+- Return database-independent `JobCandidate` values from provider integrations.
+  Ashby receives the company and API configuration. Other providers receive
+  the API configuration, company ID, and company name explicitly.
 - Keep blocking HTTP work out of the event loop. Use the shared request client
   and finite timeouts; current provider calls use 10 seconds.
 - Preserve each provider's response format and URL rules. Inspect its scraper

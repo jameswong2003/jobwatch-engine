@@ -33,4 +33,7 @@ def extract_jobs(json_data: dict, company_id: int, company_name: str) -> list[Jo
 
 
 def get_smartrecruiters_jobs(api_config: dict[str, Any], company_id: int, company_name: str) -> list[JobCandidate]:
-    return extract_jobs(get_jobs(api_config["url"]), company_id, company_name)
+    api_url = api_config.get("url")
+    if not isinstance(api_url, str) or not api_url.strip():
+        raise ValueError("api_config.url must be a non-empty string")
+    return extract_jobs(get_jobs(api_url), company_id, company_name)

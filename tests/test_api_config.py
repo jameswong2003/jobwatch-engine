@@ -16,27 +16,39 @@ from jobwatch.scrapers import (
 import manage
 
 
-def test_scraping_passes_full_config_and_preserves_error_url(monkeypatch):
+def test_scraping_passes_company_and_records_null_error_url(monkeypatch):
     config = {"url": "https://example.com/jobs", "parameters": {"limit": 50}}
     company = CompanyConfig(1, "Example", "https://example.com", "GREENHOUSE", config)
     observed = []
 
-    def scrape(board, company_id, company_name, api_config, job_url):
-        observed.append(api_config)
+    def scrape(company):
+        observed.append(company)
         raise ValueError("request failed")
 
     monkeypatch.setattr(scraping, "api_mapper", scrape)
-    jobs, errors = asyncio.run(process_jobs_from_companies([
-        company,
-        CompanyConfig(2, "Skipped", "https://example.org", "GREENHOUSE", {}),
-        CompanyConfig(3, "Empty URL", "https://example.net", "GREENHOUSE", {"url": ""}),
-    ]))
+    jobs, errors = asyncio.run(process_jobs_from_companies([company]))
 
-    assert observed == [config]
+    assert observed == [company]
+    assert observed[0].api_config is config
     assert jobs == []
     assert len(errors) == 1
-    assert errors[0].original_api_url == config["url"]
+    assert errors[0].original_api_url is None
     assert errors[0].error_message == "request failed"
+
+
+@pytest.mark.parametrize("config", [{}, {"url": None}, {"url": ""}, {"parameters": {"limit": 50}}])
+def test_scraping_reports_missing_provider_url(monkeypatch, config):
+    def request_json(*args, **kwargs):
+        pytest.fail("A missing URL must fail before an HTTP request")
+
+    monkeypatch.setattr(greenhouse_util, "request_json", request_json)
+    company = CompanyConfig(1, "Example", "https://example.com", "GREENHOUSE", config)
+    jobs, errors = asyncio.run(process_jobs_from_companies([company]))
+
+    assert jobs == []
+    assert len(errors) == 1
+    assert errors[0].original_api_url is None
+    assert errors[0].error_message == "api_config.url must be a non-empty string"
 
 
 @pytest.mark.parametrize("board, provider", [
@@ -54,16 +66,17 @@ def test_mapper_passes_full_configuration_to_provider(monkeypatch, board, provid
     config = {"parameters": {"limit": 50}}
     observed = []
     monkeypatch.setattr(mapper, provider, lambda *args: observed.append(args) or [])
-    assert mapper.api_mapper(board, 1, "Example", config, "https://example.com") == []
+    company = CompanyConfig(1, "Example", "https://example.com", board, config)
+    assert mapper.api_mapper(company) == []
     expected = (config, 1, "Example")
+    if board is JobBoardType.ASHBY:
+        expected = (company, config)
     if board is JobBoardType.WORKDAY:
         expected += ("https://example.com",)
     assert observed == [expected]
-    assert observed[0][0] is config
 
 
 @pytest.mark.parametrize("module, provider, response, method", [
-    (ashby_util, "get_ashby_jobs", {"jobs": []}, "GET"),
     (greenhouse_util, "get_greenhouse_jobs", {"jobs": []}, "GET"),
     (lever_util, "get_lever_jobs", [], "GET"),
     (oraclecloud_util, "get_oracle_cloud_jobs", {"items": [{"requisitionList": []}]}, "GET"),
@@ -86,10 +99,38 @@ def test_provider_reads_url_from_configuration(monkeypatch, module, provider, re
     assert getattr(module, provider)(*arguments) == []
     assert requests[0][:2] == (method, config["url"])
     assert requests[0][2]["timeout"] == 10
-    config.pop("url")
-    with pytest.raises(KeyError, match="url"):
-        getattr(module, provider)(*arguments)
+    for invalid_config in ({}, {"url": None}, {"url": ""}, {"url": "   "}):
+        with pytest.raises(ValueError, match="api_config.url must be a non-empty string"):
+            getattr(module, provider)(invalid_config, *arguments[1:])
     assert len(requests) == 1
+
+
+def test_ashby_reads_hosted_page_name_from_configuration(monkeypatch):
+    requests = []
+
+    def request_json(method, url, **kwargs):
+        requests.append((method, url, kwargs))
+        return {"data": {"jobBoard": {"jobPostings": [
+            {"id": "existing-id", "title": "Engineer", "locationName": "Remote"},
+        ]}}}
+
+    monkeypatch.setattr(ashby_util, "request_json", request_json)
+    config = {"organizationHostedJobsPageName": "hosted-board"}
+    company = CompanyConfig(1, "Different Company Name", "https://example.com/careers", "ASHBY", config)
+    jobs, errors = asyncio.run(process_jobs_from_companies([company]))
+
+    assert errors == []
+    assert len(jobs) == 1
+    assert jobs[0].job_id == "existing-id"
+    assert jobs[0].job_posting_url == "https://jobs.ashbyhq.com/hosted-board/existing-id"
+    assert jobs[0].location == "Remote"
+    assert requests[0][:2] == ("POST", ashby_util.API_URL)
+    assert requests[0][2]["json"] == {
+        "operationName": "ApiJobBoardWithTeams",
+        "variables": {"organizationHostedJobsPageName": "hosted-board"},
+        "query": ashby_util.QUERY,
+    }
+    assert requests[0][2]["timeout"] == 10
 
 
 def test_standalone_startup_upgrades_existing_company_rows(monkeypatch):

@@ -27,4 +27,7 @@ def extract_jobs(json_data: Dict, company_id: int) -> list[JobCandidate]:
 
 
 def get_rippling_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
-    return extract_jobs(get_jobs(api_config["url"]), company_id)
+    api_url = api_config.get("url")
+    if not isinstance(api_url, str) or not api_url.strip():
+        raise ValueError("api_config.url must be a non-empty string")
+    return extract_jobs(get_jobs(api_url), company_id)

@@ -1,5 +1,3 @@
-from typing import Any
-
 from jobwatch.models.job_types import JobBoardType
 from jobwatch.helpers.job_sorter import categorize_jobs
 from jobwatch.scrapers.job_candidate import JobCandidate
@@ -13,18 +11,15 @@ from jobwatch.scrapers.workday_util import get_workday_jobs
 from jobwatch.scrapers.custom_scrapers.amazon.amazon_scraper import get_amazon_jobs
 from jobwatch.scrapers.custom_scrapers.ibm.ibm_scraper import get_ibm_jobs
 
-
-def api_mapper(
-    job_board_type: JobBoardType,
-    company_id: int,
-    company_name: str,
-    api_config: dict[str, Any],
-    company_job_url: str,
-) -> list[JobCandidate]:
+def api_mapper(company) -> list[JobCandidate]:
     """Scrape and normalize postings without consulting persistence."""
-    match job_board_type:
+    company_id = company.company_id
+    company_name = company.company_name
+    api_config = company.api_config
+    company_job_url = company.company_job_url
+    match company.job_board_type:
         case JobBoardType.ASHBY:
-            candidates = get_ashby_jobs(api_config, company_id, company_name)
+            candidates = get_ashby_jobs(company, api_config)
         case JobBoardType.GREENHOUSE:
             candidates = get_greenhouse_jobs(api_config, company_id, company_name)
         case JobBoardType.WORKDAY:

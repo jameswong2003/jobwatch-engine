@@ -34,5 +34,8 @@ def extract_jobs(json_data: dict, company_id: int, base_url: str) -> list[JobCan
 
 
 def get_oracle_cloud_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
-    json_data, base_url = get_jobs(api_config["url"])
+    api_url = api_config.get("url")
+    if not isinstance(api_url, str) or not api_url.strip():
+        raise ValueError("api_config.url must be a non-empty string")
+    json_data, base_url = get_jobs(api_url)
     return extract_jobs(json_data, company_id, base_url)

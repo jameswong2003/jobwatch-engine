@@ -33,7 +33,10 @@ def extract_jobs(json_data: dict, company_id: int) -> list[JobCandidate]:
 
 
 def get_greenhouse_jobs(api_config: dict[str, Any], company_id: int, company_name: str = "") -> list[JobCandidate]:
-    return extract_jobs(get_jobs(api_config["url"]), company_id)
+    api_url = api_config.get("url")
+    if not isinstance(api_url, str) or not api_url.strip():
+        raise ValueError("api_config.url must be a non-empty string")
+    return extract_jobs(get_jobs(api_url), company_id)
 
 
 def is_greenhouse_job_active(api_url: str | None, job_id: str | None) -> bool:
