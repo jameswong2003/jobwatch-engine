@@ -35,6 +35,7 @@ def extract_jobs(json_data: dict, company_id: int, hosted_jobs_page_name: str) -
     jobs_data = job_board.get("jobPostings") if isinstance(job_board, dict) else None
     if not isinstance(jobs_data, list):
         raise ValueError("Ashby response is missing data.jobBoard.jobPostings")
+    hosted_jobs_page_path = hosted_jobs_page_name.replace(" ", "%20")
     jobs: list[JobCandidate] = []
     for job in jobs_data:
         job_id = job.get("id")
@@ -42,7 +43,7 @@ def extract_jobs(json_data: dict, company_id: int, hosted_jobs_page_name: str) -
             continue
         jobs.append(JobCandidate(
             company_id=company_id,
-            job_posting_url=f"https://jobs.ashbyhq.com/{hosted_jobs_page_name}/{job_id}",
+            job_posting_url=f"https://jobs.ashbyhq.com/{hosted_jobs_page_path}/{job_id}",
             job_id=str(job_id), job_date=date.today(), job_title=job.get("title") or "",
             active=True, location=job.get("locationName"), date_added=date.today(),
         ))
